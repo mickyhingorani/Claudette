@@ -7,7 +7,11 @@ A simple, dark Markdown app for macOS, with minimal chrome. It's a calm place to
 - Connect any folder, such as a project folder Claude also works in. New files appear on their own.
 - Import files, or drag them onto the window. Drag a folder in to connect it.
 - Edits save automatically.
-- Five themes, each with its own colors and fonts: Ink, Slate, Nord, Solarized, and Terminal.
+- Four themes, each with its own colors and fonts:
+  - Slate (the default): Atkinson Hyperlegible Next, with JetBrains Mono code
+  - Solarized: IBM Plex Sans, with IBM Plex Mono code
+  - Nord: Geist, with Geist Mono code
+  - Terminal: JetBrains Mono throughout
 - Code blocks are syntax highlighted for about 190 languages, in each theme's colors.
 
 ## Build and run
@@ -31,6 +35,8 @@ xcodebuild -scheme Claudette -destination 'platform=macOS' -derivedDataPath buil
 ## Credits
 
 Syntax highlighting uses [highlight.js](https://highlightjs.org), bundled under its BSD 3-Clause license.
+
+The fonts are bundled under the SIL Open Font License 1.1, with each license in `App/Fonts`: [Atkinson Hyperlegible Next](https://www.brailleinstitute.org/freefont/), [Geist and Geist Mono](https://github.com/vercel/geist-font), [IBM Plex Sans and IBM Plex Mono](https://github.com/IBM/plex), and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono).
 
 ## Shortcuts
 

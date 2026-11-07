@@ -16,7 +16,7 @@ enum Snapshot {
         guard let text = try? String(contentsOfFile: file, encoding: .utf8) else { exit(1) }
         _ = NSApplication.shared
         let (scroll, editor) = EditorTextView.makeInScrollView()
-        editor.theme = Theme.named(defaults.string(forKey: "snapshotTheme") ?? "ink")
+        editor.theme = Theme.named(defaults.string(forKey: "snapshotTheme") ?? Theme.default.id)
         editor.viewMode = ViewMode(rawValue: defaults.string(forKey: "snapshotMode") ?? "") ?? .formatted
         let size = NSSize(width: 900, height: CGFloat(defaults.object(forKey: "snapshotHeight") == nil ? 900 : defaults.integer(forKey: "snapshotHeight")))
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless], backing: .buffered, defer: false)
@@ -36,7 +36,7 @@ enum Snapshot {
         _ = NSApplication.shared
         let store = AppModel.scratchDefaults()
         store.set([folder], forKey: "folders")
-        store.set(defaults.string(forKey: "snapshotTheme") ?? "ink", forKey: "theme")
+        store.set(defaults.string(forKey: "snapshotTheme") ?? Theme.default.id, forKey: "theme")
         store.set(defaults.string(forKey: "snapshotMode") ?? "formatted", forKey: "viewMode")
         let model = AppModel(defaults: store, starterFolder: URL(fileURLWithPath: folder), watchesFolders: false)
         model.isFileListOpen = defaults.bool(forKey: "snapshotList")

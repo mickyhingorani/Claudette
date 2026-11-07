@@ -152,7 +152,7 @@ final class TableEditingTests: XCTestCase {
         let long = "| Item | Notes | Price |\n|---|---|---:|\n| a | " + String(repeating: "word ", count: 80) + "| 1 |\n"
         let overlay = try XCTUnwrap(makeEditor(long).tableOverlays.first)
         let manager = NSFontManager.shared
-        let headerFont = manager.convert(manager.convert(Theme.ink.bodyFont, toSize: 16), toHaveTrait: .boldFontMask)
+        let headerFont = manager.convert(manager.convert(Theme.default.bodyFont, toSize: (Theme.default.bodyFont.pointSize * 0.94).rounded()), toHaveTrait: .boldFontMask)
         let word = ("Price" as NSString).size(withAttributes: [.font: headerFont]).width
         XCTAssertGreaterThanOrEqual(overlay.columnWidths[2], word + 20)
         XCTAssertLessThanOrEqual(overlay.gridSize.width, 680)

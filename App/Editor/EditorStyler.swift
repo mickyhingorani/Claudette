@@ -9,7 +9,7 @@ extension NSAttributedString.Key {
 /// Turns a `StyleMap` into text attributes and the set of hidden characters.
 final class EditorStyler {
     private(set) var map = StyleMap()
-    var theme = Theme.ink
+    var theme = Theme.default
     var mode = ViewMode.formatted
 
     func rescan(_ text: String) {
@@ -41,6 +41,7 @@ final class EditorStyler {
             style(span, in: storage)
         }
         colorCode(in: storage)
+        keepOperatorsAsTyped(in: storage)
         if mode == .markdown {
             for range in map.hidden.map(\.range) + map.substitutions.map(\.range) {
                 storage.addAttribute(.foregroundColor, value: theme.accent, range: range)
@@ -65,7 +66,7 @@ final class EditorStyler {
                 let scales: [CGFloat] = [1.7, 1.35, 1.15]
                 let scale = level <= 3 ? scales[level - 1] : 1
                 let size = (baseFont.pointSize * scale).rounded()
-                let sized = NSFontManager.shared.convert(baseFont, toSize: size)
+                let sized = NSFontManager.shared.convert(theme.headingFont, toSize: size)
                 storage.addAttribute(.font, value: NSFontManager.shared.convert(sized, toHaveTrait: .boldFontMask), range: range)
                 let paragraph = baseParagraph
                 paragraph.paragraphSpacingBefore = level == 1 ? 8 : 14
@@ -93,7 +94,11 @@ final class EditorStyler {
             storage.addAttribute(.font, value: monoScaled, range: range)
             if mode == .formatted {
                 let paragraph = baseParagraph
-                paragraph.lineHeightMultiple = 1.2
+                // Fixed from the size: code fonts build in very different amounts of space.
+                let lineHeight = (monoScaled.pointSize * 1.55).rounded()
+                paragraph.lineHeightMultiple = 0
+                paragraph.minimumLineHeight = lineHeight
+                paragraph.maximumLineHeight = lineHeight
                 paragraph.paragraphSpacing = 0
                 paragraph.firstLineHeadIndent = 14
                 paragraph.headIndent = 14
@@ -140,6 +145,14 @@ final class EditorStyler {
                 let range = NSRange(location: block.contentRange.location + token.range.location, length: token.range.length)
                 storage.addAttribute(.foregroundColor, value: theme.palette.color(for: token.kind), range: range)
             }
+        }
+    }
+
+    /// Resizing or bolding a font drops its features, so coding fonts get theirs back here.
+    private func keepOperatorsAsTyped(in storage: NSTextStorage) {
+        storage.enumerateAttribute(.font, in: NSRange(location: 0, length: storage.length)) { value, range, _ in
+            guard let font = value as? NSFont, font.isFixedPitch else { return }
+            storage.addAttribute(.font, value: Theme.showingOperatorsAsTyped(font), range: range)
         }
     }
 
