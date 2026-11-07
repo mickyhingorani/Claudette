@@ -189,11 +189,10 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     }
 
     private func drawChip(_ range: NSRange, showing glyphsToShow: NSRange, at origin: NSPoint) {
-        guard let glyphs = displayedGlyphs(of: range), let container = textContainers.first,
-              NSIntersectionRange(glyphs, glyphsToShow).length > 0 else { return }
+        guard let glyphs = displayedGlyphs(of: range), NSIntersectionRange(glyphs, glyphsToShow).length > 0 else { return }
         codeBackground.setFill()
-        enumerateEnclosingRects(forGlyphRange: glyphs, withinSelectedGlyphRange: NSRange(location: NSNotFound, length: 0), in: container) { rect, _ in
-            let chip = rect.offsetBy(dx: origin.x, dy: origin.y).insetBy(dx: -3, dy: 2)
+        for rect in lineRects(of: range) {
+            let chip = NSRect(x: rect.minX + origin.x - 3, y: rect.maxY + origin.y - 14, width: rect.width + 6, height: 19)
             NSBezierPath(roundedRect: chip, xRadius: 4, yRadius: 4).fill()
         }
     }
