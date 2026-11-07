@@ -74,14 +74,14 @@ private func hidden(_ text: String) -> [NSRange] {
 
     @Test func taskBoxChecked() {
         let map = MarkdownScanner.scan("- [x] done\n")
-        #expect(map.taskBoxes == [TaskBox(range: r(2, 3), isChecked: true)])
-        #expect(map.substitutions == [Substitution(range: r(2, 3), glyph: "☑", owner: r(0, 5))])
-        #expect(map.hidden.map(\.range) == [r(0, 2)])
+        #expect(map.taskBoxes == [TaskBox(range: r(2, 3), isChecked: true, owner: r(0, 5))])
+        #expect(map.substitutions == [Substitution(range: r(0, 5), glyph: "☑", owner: r(0, 5))])
+        #expect(map.hidden.isEmpty)
     }
 
     @Test func taskBoxUnchecked() {
         let map = MarkdownScanner.scan("- [ ] todo\n")
-        #expect(map.taskBoxes == [TaskBox(range: r(2, 3), isChecked: false)])
+        #expect(map.taskBoxes == [TaskBox(range: r(2, 3), isChecked: false, owner: r(0, 5))])
         #expect(map.substitutions.first?.glyph == "☐")
     }
 

@@ -218,9 +218,10 @@ private struct Walker: MarkupWalker {
             let box = NSRange(location: boxStart, length: 3)
             let owner = NSRange(location: start, length: NSMaxRange(box) - start)
             map.spans.append(StyledSpan(range: owner, kind: .listItem))
-            map.taskBoxes.append(TaskBox(range: box, isChecked: checkbox == .checked))
-            hide(NSRange(location: start, length: boxStart - start), owner: owner)
-            map.substitutions.append(Substitution(range: box, glyph: checkbox == .checked ? "☑" : "☐", owner: owner))
+            map.taskBoxes.append(TaskBox(range: box, isChecked: checkbox == .checked, owner: owner))
+            // The glyph takes the marker's first character: hidden text at the start
+            // of a line would make it lay out like a wrapped line.
+            map.substitutions.append(Substitution(range: owner, glyph: checkbox == .checked ? "☑" : "☐", owner: owner))
             return
         }
 
@@ -280,7 +281,7 @@ private extension StyleMap {
         map.spans = spans.map { StyledSpan(range: shift($0.range), kind: $0.kind) }
         map.hidden = hidden.map { HiddenRange(range: shift($0.range), owner: shift($0.owner), kind: $0.kind) }
         map.substitutions = substitutions.map { Substitution(range: shift($0.range), glyph: $0.glyph, owner: shift($0.owner)) }
-        map.taskBoxes = taskBoxes.map { TaskBox(range: shift($0.range), isChecked: $0.isChecked) }
+        map.taskBoxes = taskBoxes.map { TaskBox(range: shift($0.range), isChecked: $0.isChecked, owner: shift($0.owner)) }
         map.tables = tables.map { table in
             func shiftCell(_ cell: TableCell) -> TableCell { TableCell(textRange: shift(cell.textRange), text: cell.text) }
             return TableBlock(range: shift(table.range), header: table.header.map(shiftCell),

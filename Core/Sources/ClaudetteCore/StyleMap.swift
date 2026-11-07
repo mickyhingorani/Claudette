@@ -41,9 +41,11 @@ public struct Substitution: Equatable, Sendable {
     public var owner: NSRange
 }
 
+/// `range` is the `[ ]` text. `owner` is the whole marker, including the list dash.
 public struct TaskBox: Equatable, Sendable {
     public var range: NSRange
     public var isChecked: Bool
+    public var owner: NSRange
 }
 
 public struct StyleMap: Equatable, Sendable {
