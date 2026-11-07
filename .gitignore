@@ -15,3 +15,6 @@ xcuserdata/
 # Claude Code local files
 .claude/settings.local.json
 .claude/worktrees/
+
+# Brainstorming mockups
+.superpowers/
