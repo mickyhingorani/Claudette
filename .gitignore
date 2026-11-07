@@ -18,3 +18,8 @@ xcuserdata/
 
 # Brainstorming mockups
 .superpowers/
+
+# SwiftPM
+Core/.build/
+Core/Package.resolved
+

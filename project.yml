@@ -1,0 +1,51 @@
+name: Claudette
+options:
+  bundleIdPrefix: com.mickyhingorani
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+packages:
+  ClaudetteCore:
+    path: Core
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_APP_SANDBOX: NO
+    ENABLE_HARDENED_RUNTIME: NO
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: 7TWJ38WWA9
+    CODE_SIGN_IDENTITY: "Apple Development"
+targets:
+  Claudette:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - package: ClaudetteCore
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Claudette
+        LSApplicationCategoryType: public.app-category.productivity
+        NSHumanReadableCopyright: ""
+  ClaudetteTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [AppTests]
+    dependencies:
+      - target: Claudette
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Claudette.app/Contents/MacOS/Claudette"
+schemes:
+  Claudette:
+    build:
+      targets:
+        Claudette: all
+        ClaudetteTests: [test]
+    test:
+      targets: [ClaudetteTests]
