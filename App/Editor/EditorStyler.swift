@@ -66,7 +66,7 @@ final class EditorStyler {
             return paragraph
         }
         let small = style(height: 8)
-        let roomy = style(height: 22)
+        let roomy = style(height: 16)
         var location = 0
         while location < text.length {
             let line = text.lineRange(for: NSRange(location: location, length: 0))

@@ -130,7 +130,7 @@ final class EditorTests: XCTestCase {
     func testBlankLineBeforeCodeBlockLeavesRoom() {
         let editor = makeEditor("a\n\n```\nx\n```\n\nb\n")
         let style = editor.textStorage!.attribute(.paragraphStyle, at: 2, effectiveRange: nil) as? NSParagraphStyle
-        XCTAssertGreaterThanOrEqual(style?.minimumLineHeight ?? 0, 20)
+        XCTAssertGreaterThan(style?.minimumLineHeight ?? 0, 8)
     }
 
     func testBlankLineAfterCodeBlockLeavesRoom() {
@@ -138,7 +138,7 @@ final class EditorTests: XCTestCase {
         let editor = makeEditor(text)
         let blank = (text as NSString).range(of: "\n\nb").location + 1
         let style = editor.textStorage!.attribute(.paragraphStyle, at: blank, effectiveRange: nil) as? NSParagraphStyle
-        XCTAssertGreaterThanOrEqual(style?.minimumLineHeight ?? 0, 20)
+        XCTAssertGreaterThan(style?.minimumLineHeight ?? 0, 8)
     }
 
     func testFreshlyOpenedFileHidesSyntaxAtTheCursor() {
@@ -150,6 +150,26 @@ final class EditorTests: XCTestCase {
         let editor = makeEditor("# Title\n\nx\n")
         editor.setSelectedRange(NSRange(location: 3, length: 0))
         XCTAssertFalse(editor.hidingLayoutManager.isHidden(at: 0))
+    }
+
+    func testUnderlineOfWrappedLineCoversOnlyTheLink() throws {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.theme = .terminal
+        editor.setFrameSize(NSSize(width: 980, height: 700))
+        editor.load(text: "Four days, mostly on foot. **Keep mornings open** and *book ahead*. See [the plan](https://example.com).")
+        let layout = editor.hidingLayoutManager
+        let rects = layout.lineRects(of: try XCTUnwrap(layout.decorations.underlines.first))
+        XCTAssertEqual(rects.count, 1)
+        XCTAssertLessThan(try XCTUnwrap(rects.first).width, 120)
+    }
+
+    func testCodeBackgroundStartsAtItsFirstVisibleLine() throws {
+        let editor = makeEditor("a\n\n```\nx\n```\n\nb\n")
+        let layout = editor.hidingLayoutManager
+        let block = try XCTUnwrap(layout.decorations.codeBlocks.first)
+        let top = try XCTUnwrap(layout.blockRect(of: block)).minY
+        let codeGlyph = layout.glyphIndexForCharacter(at: 7)
+        XCTAssertEqual(top, layout.lineFragmentRect(forGlyphAt: codeGlyph, effectiveRange: nil).minY)
     }
 
     func testLoadClearsUndo() {

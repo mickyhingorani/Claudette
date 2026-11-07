@@ -146,23 +146,51 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
 
     /// Text attributes can't do this: their lines spread across a line that has hidden text at a wrap.
     private func drawLine(under range: NSRange, color: NSColor, offset: CGFloat, showing glyphsToShow: NSRange, at origin: NSPoint) {
-        guard let length = textStorage?.length, NSMaxRange(range) <= length, let container = textContainers.first else { return }
-        let glyphs = glyphRange(forCharacterRange: range, actualCharacterRange: nil)
-        guard NSIntersectionRange(glyphs, glyphsToShow).length > 0 else { return }
         color.setFill()
-        enumerateLineFragments(forGlyphRange: glyphs) { fragment, _, _, lineGlyphs, _ in
-            let part = NSIntersectionRange(lineGlyphs, glyphs)
-            guard part.length > 0 else { return }
-            let bounds = self.boundingRect(forGlyphRange: part, in: container)
-            let baseline = fragment.minY + self.location(forGlyphAt: part.location).y
-            NSRect(x: bounds.minX + origin.x, y: baseline + offset + origin.y, width: bounds.width, height: 1).fill()
+        for rect in lineRects(of: range) {
+            NSRect(x: rect.minX + origin.x, y: rect.maxY + offset + origin.y, width: rect.width, height: 1).fill()
         }
     }
 
+    /// One rectangle per line a range is on, from its text's left edge to its baseline.
+    func lineRects(of range: NSRange) -> [NSRect] {
+        guard let glyphs = displayedGlyphs(of: range) else { return [] }
+        var rects: [NSRect] = []
+        enumerateLineFragments(forGlyphRange: glyphs) { fragment, used, _, lineGlyphs, _ in
+            let part = NSIntersectionRange(lineGlyphs, glyphs)
+            guard part.length > 0 else { return }
+            let start = self.location(forGlyphAt: part.location)
+            // Measured glyph by glyph: bounding-rect lookups return the whole line
+            // when a wrapped line ends in hidden glyphs.
+            let next = NSMaxRange(part)
+            let endX = next < NSMaxRange(lineGlyphs) ? self.location(forGlyphAt: next).x : used.width + used.minX - fragment.minX
+            rects.append(NSRect(x: fragment.minX + start.x, y: fragment.minY, width: endX - start.x, height: start.y))
+        }
+        return rects
+    }
+
+    /// The glyphs for a range, without hidden syntax at either end.
+    private func displayedGlyphs(of range: NSRange) -> NSRange? {
+        guard let length = textStorage?.length, NSMaxRange(range) <= length, range.length > 0 else { return nil }
+        var start = range.location
+        var end = NSMaxRange(range)
+        while start < end, hidden.contains(start) { start += 1 }
+        while end > start, hidden.contains(end - 1) { end -= 1 }
+        if start == end {
+            // All hidden, like a rule: use the whole range.
+            start = range.location
+            end = NSMaxRange(range)
+        }
+        // Mapped one character at a time: `glyphRange(forCharacterRange:)` runs on through
+        // any hidden glyphs that follow, and hidden text at a line start joins the line before.
+        let first = glyphIndexForCharacter(at: start)
+        let last = glyphIndexForCharacter(at: end - 1)
+        return NSRange(location: first, length: last - first + 1)
+    }
+
     private func drawChip(_ range: NSRange, showing glyphsToShow: NSRange, at origin: NSPoint) {
-        guard let length = textStorage?.length, NSMaxRange(range) <= length, let container = textContainers.first else { return }
-        let glyphs = glyphRange(forCharacterRange: range, actualCharacterRange: nil)
-        guard NSIntersectionRange(glyphs, glyphsToShow).length > 0 else { return }
+        guard let glyphs = displayedGlyphs(of: range), let container = textContainers.first,
+              NSIntersectionRange(glyphs, glyphsToShow).length > 0 else { return }
         codeBackground.setFill()
         enumerateEnclosingRects(forGlyphRange: glyphs, withinSelectedGlyphRange: NSRange(location: NSNotFound, length: 0), in: container) { rect, _ in
             let chip = rect.offsetBy(dx: origin.x, dy: origin.y).insetBy(dx: -3, dy: 2)
@@ -171,9 +199,13 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     }
 
     private func fragmentsRect(of range: NSRange, showing glyphsToShow: NSRange) -> NSRect? {
-        guard let length = textStorage?.length, NSMaxRange(range) <= length else { return nil }
-        let glyphs = glyphRange(forCharacterRange: range, actualCharacterRange: nil)
-        guard NSIntersectionRange(glyphs, glyphsToShow).length > 0 || glyphs.length == 0 else { return nil }
+        guard let glyphs = displayedGlyphs(of: range), NSIntersectionRange(glyphs, glyphsToShow).length > 0 else { return nil }
+        return blockRect(of: range)
+    }
+
+    /// The line fragments a block's displayed text is on.
+    func blockRect(of range: NSRange) -> NSRect? {
+        guard let glyphs = displayedGlyphs(of: range) else { return nil }
         var result: NSRect?
         enumerateLineFragments(forGlyphRange: glyphs) { rect, _, _, _, _ in
             result = result?.union(rect) ?? rect
