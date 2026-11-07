@@ -16,6 +16,7 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     var decorations = EditorDecorations()
     /// Tables drawn over hidden source, as the source range and the height to reserve.
     private(set) var reservedTables: [(range: NSRange, height: CGFloat)] = []
+    private var tableOffsets: [Int: CGFloat] = [:]
     var codeBackground = NSColor.clear
     var ruleColor = NSColor.clear
     var quoteBarColor = NSColor.clear
@@ -73,10 +74,17 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         guard !reservedTables.isEmpty else { return false }
         let characters = characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
         guard let table = reservedTables.first(where: { NSIntersectionRange($0.range, characters).length > 0 }) else { return false }
-        lineFragmentRect.pointee.size.height = table.height
-        lineFragmentUsedRect.pointee.size.height = table.height
+        // Hidden text at a line start joins the line before, so a table can share a fragment
+        // with the text above it. The table then goes below that text.
+        let textHeight = characters.location < table.range.location ? lineFragmentRect.pointee.height : 0
+        tableOffsets[table.range.location] = textHeight
+        lineFragmentRect.pointee.size.height = textHeight + table.height
+        lineFragmentUsedRect.pointee.size.height = textHeight + table.height
         return true
     }
+
+    /// How far below its line fragment's top a table starts.
+    func tableOffset(at location: Int) -> CGFloat { tableOffsets[location] ?? 0 }
 
     func layoutManager(_ layoutManager: NSLayoutManager,
                        shouldGenerateGlyphs glyphs: UnsafePointer<CGGlyph>,

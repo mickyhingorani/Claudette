@@ -235,7 +235,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
             let glyph = layout.glyphIndexForCharacter(at: overlay.table.range.location)
             let rect = layout.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
             let padding = textContainer?.lineFragmentPadding ?? 0
-            let frame = NSRect(x: rect.minX + textContainerOrigin.x + padding, y: rect.minY + textContainerOrigin.y,
+            let frame = NSRect(x: rect.minX + textContainerOrigin.x + padding, y: rect.minY + textContainerOrigin.y + hidingLayoutManager.tableOffset(at: overlay.table.range.location),
                                width: overlay.gridSize.width, height: overlay.gridSize.height)
             if overlay.frame != frame { overlay.frame = frame }
         }

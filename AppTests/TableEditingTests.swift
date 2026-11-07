@@ -38,6 +38,16 @@ final class TableEditingTests: XCTestCase {
         XCTAssertGreaterThan(overlay.frame.height, 40)
     }
 
+    func testTableSitsBelowTextDirectlyAboveIt() throws {
+        let editor = makeEditor("Here are the results:\n| A |\n|---|\n| 1 |\n\nAfter\n")
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        let layout = editor.hidingLayoutManager
+        let baseline = layout.lineFragmentRect(forGlyphAt: 0, effectiveRange: nil).minY + layout.location(forGlyphAt: 0).y + editor.textContainerOrigin.y
+        XCTAssertGreaterThan(overlay.frame.minY, baseline)
+        let after = layout.glyphIndexForCharacter(at: (editor.string as NSString).range(of: "After").location)
+        XCTAssertGreaterThanOrEqual(layout.lineFragmentRect(forGlyphAt: after, effectiveRange: nil).minY + editor.textContainerOrigin.y, overlay.frame.maxY)
+    }
+
     func testNarrowWidthWrapsCellsTaller() throws {
         let long = "| A |\n|---|\n| " + String(repeating: "word ", count: 60) + "|\n"
         let wide = try XCTUnwrap(makeEditor(long, width: 1000).tableOverlays.first).frame.height

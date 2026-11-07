@@ -18,8 +18,9 @@ final class RealPathTests: XCTestCase {
     override func setUp() async throws {
         root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        suite = UUID().uuidString
+        suite = "com.mickyhingorani.Claudette.tests"
         defaults = UserDefaults(suiteName: suite)
+        defaults.removePersistentDomain(forName: suite)
     }
 
     override func tearDown() async throws {
