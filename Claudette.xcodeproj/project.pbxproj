@@ -9,20 +9,40 @@
 /* Begin PBXBuildFile section */
 		0578BCE75C004E526F9C6B4C /* ClaudetteCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5F55AA8C306A1B9F024F24A4 /* ClaudetteCore */; };
 		0A37619B421209992759C727 /* EditorStyler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E60578DCA7915693FA7EBB1 /* EditorStyler.swift */; };
+		0A45766E1BB3DA9C8E76E5F1 /* GeistMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 411D6E3AEF8DA821FDFC63BD /* GeistMono-OFL.txt */; };
 		0D45AB81AA2BDC6A5D6851B5 /* ParagraphTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B17989DDD758FF6619372CD3 /* ParagraphTests.swift */; };
+		0E38A23CEDA871AB4BA2496A /* Geist-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5EE10C310B2B43A4ED85F341 /* Geist-Italic[wght].ttf */; };
+		1E007A53D7E04A3F1625C2A9 /* IBMPlexMono-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8FA0DA4D86C871865A0A6AF1 /* IBMPlexMono-Italic.ttf */; };
 		1FA4279C34C5C46E5627DCB1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4819C256EEBDE1176786EA4 /* Theme.swift */; };
+		211D2E2EF3388BCB14B53A6E /* IBMPlexMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A6F47EA458A587DE658DA260 /* IBMPlexMono-Regular.ttf */; };
 		24C7F9B99A96F42B97536E06 /* EditorTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818CC86FF5295B038D507C33 /* EditorTextView.swift */; };
+		2F65B9D29ED69E525C74F3F3 /* IBMPlexMono-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 686721175B082A3CD208B06D /* IBMPlexMono-BoldItalic.ttf */; };
 		32B06F452D7980FFDA905FB3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */; };
 		350B6C47BCB3047D0F44C67A /* HidingLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4097A68E275D263A6D78F5 /* HidingLayoutManager.swift */; };
 		379AE30927A3A4076AA44076 /* FolderWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD423DB075FF474B94C7621 /* FolderWatcher.swift */; };
+		3D9FF715F48753E2D69795E2 /* JetBrainsMono-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2AD2D3024694420D4879750F /* JetBrainsMono-Italic[wght].ttf */; };
 		415A729A4D294FA3888AB804 /* RealPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */; };
+		473B73939A6A22DFBF9D3CC4 /* AtkinsonHyperlegibleNext-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 42254BC4ECD9559141DF391B /* AtkinsonHyperlegibleNext-OFL.txt */; };
+		4D34D7A9629A5055E804620B /* JetBrainsMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4BC9F1E7148162EDE1EE2D9A /* JetBrainsMono-OFL.txt */; };
 		501683150F9D895D2FBF86DE /* TableEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */; };
+		52385B554F5710B809F56AD6 /* Geist-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2616A19BD427A3B67AE3B94D /* Geist-OFL.txt */; };
+		5FE6E48ACCB163F2F5386735 /* IBMPlexSans-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = DFAB8DC78977B6E9410F8709 /* IBMPlexSans-OFL.txt */; };
+		6057C59D3A31DB3B15C67764 /* IBMPlexMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = F2D6B3B208061A672D0A4283 /* IBMPlexMono-OFL.txt */; };
+		6509076BFB32412A676C878F /* IBMPlexSans-Italic[wdth,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = FDA016501C14EAB655624BD2 /* IBMPlexSans-Italic[wdth,wght].ttf */; };
+		67D633573EDFD173843A1D83 /* IBMPlexMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C8BCF9F6ED0A88FDCF044A29 /* IBMPlexMono-Bold.ttf */; };
+		6C792218CE729EAD897233E8 /* JetBrainsMono[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = AAB462AE787EFE81200A98E1 /* JetBrainsMono[wght].ttf */; };
+		6DC23D45A3BE360EDE9A9D7D /* AtkinsonHyperlegibleNext[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 12A07D8B779FEAC1A331A035 /* AtkinsonHyperlegibleNext[wght].ttf */; };
+		72E41326F5724B84FF740E1F /* AtkinsonHyperlegibleNext-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0B581B0DA980BDC3A1DB2F22 /* AtkinsonHyperlegibleNext-Italic[wght].ttf */; };
 		7A79FC0F741B39CE04789344 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9715F52408350CB000B481D /* AppModel.swift */; };
+		89CE99D5BBCDBA9F17B95CF0 /* IBMPlexSans[wdth,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 28F5AE0FD2D2685603753EFF /* IBMPlexSans[wdth,wght].ttf */; };
+		940FA2A577F8DBBAE5E884A7 /* GeistMono-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = E08452B54F3CA78B4D68312B /* GeistMono-Italic[wght].ttf */; };
 		C960C7B815F9E827E741C78E /* ClaudetteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */; };
 		D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */; };
+		D53D0FD3F8A3EA236F6A23E1 /* Geist[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4BC5945C3C2FB3DD3D0AA2E6 /* Geist[wght].ttf */; };
 		D9D1ED470E53BABC4EC71936 /* EditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D9C0257768097483F1AE63 /* EditorTests.swift */; };
 		E0F36871D565C8F6F97C73F3 /* TableOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A818A1E4233A0221DE14323F /* TableOverlayView.swift */; };
 		E2B5C73FAE83CDCF10B24703 /* AppModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B7CC701012237EF000CD8E8 /* AppModelTests.swift */; };
+		E4BF84F193C79524F515D75D /* GeistMono[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 438CCFB4AD275C881EC89E07 /* GeistMono[wght].ttf */; };
 		E9757EC2C7B88B987A2FCEEC /* Snapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841420B921672F16E1F5D936 /* Snapshot.swift */; };
 		EC9FF80388CCF0084AA008B5 /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55A5438F65AE9739BCE3AEE1 /* FileListView.swift */; };
 		F4A33C31CFE78FB12874452F /* ThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F101BB4C638D9E7178C4F /* ThemeTests.swift */; };
@@ -40,29 +60,49 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0B581B0DA980BDC3A1DB2F22 /* AtkinsonHyperlegibleNext-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "AtkinsonHyperlegibleNext-Italic[wght].ttf"; sourceTree = "<group>"; };
+		12A07D8B779FEAC1A331A035 /* AtkinsonHyperlegibleNext[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "AtkinsonHyperlegibleNext[wght].ttf"; sourceTree = "<group>"; };
 		18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		1B7CC701012237EF000CD8E8 /* AppModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelTests.swift; sourceTree = "<group>"; };
 		25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableEditingTests.swift; sourceTree = "<group>"; };
+		2616A19BD427A3B67AE3B94D /* Geist-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Geist-OFL.txt"; sourceTree = "<group>"; };
+		28F5AE0FD2D2685603753EFF /* IBMPlexSans[wdth,wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexSans[wdth,wght].ttf"; sourceTree = "<group>"; };
+		2AD2D3024694420D4879750F /* JetBrainsMono-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-Italic[wght].ttf"; sourceTree = "<group>"; };
 		2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealPathTests.swift; sourceTree = "<group>"; };
 		2FD423DB075FF474B94C7621 /* FolderWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderWatcher.swift; sourceTree = "<group>"; };
+		411D6E3AEF8DA821FDFC63BD /* GeistMono-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "GeistMono-OFL.txt"; sourceTree = "<group>"; };
+		42254BC4ECD9559141DF391B /* AtkinsonHyperlegibleNext-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "AtkinsonHyperlegibleNext-OFL.txt"; sourceTree = "<group>"; };
+		438CCFB4AD275C881EC89E07 /* GeistMono[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GeistMono[wght].ttf"; sourceTree = "<group>"; };
+		4BC5945C3C2FB3DD3D0AA2E6 /* Geist[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Geist[wght].ttf"; sourceTree = "<group>"; };
+		4BC9F1E7148162EDE1EE2D9A /* JetBrainsMono-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "JetBrainsMono-OFL.txt"; sourceTree = "<group>"; };
 		55A5438F65AE9739BCE3AEE1 /* FileListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
 		57AF89E94939D999B66B13C8 /* Claudette.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Claudette.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5EE10C310B2B43A4ED85F341 /* Geist-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Geist-Italic[wght].ttf"; sourceTree = "<group>"; };
+		686721175B082A3CD208B06D /* IBMPlexMono-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-BoldItalic.ttf"; sourceTree = "<group>"; };
 		7E4686DDE37BF53C77F82A85 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
 		818CC86FF5295B038D507C33 /* EditorTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTextView.swift; sourceTree = "<group>"; };
 		841420B921672F16E1F5D936 /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
 		84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudetteApp.swift; sourceTree = "<group>"; };
 		872C2316D731CE800F69D51A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8FA0DA4D86C871865A0A6AF1 /* IBMPlexMono-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-Italic.ttf"; sourceTree = "<group>"; };
 		96D9C0257768097483F1AE63 /* EditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTests.swift; sourceTree = "<group>"; };
 		9B4097A68E275D263A6D78F5 /* HidingLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HidingLayoutManager.swift; sourceTree = "<group>"; };
 		9E60578DCA7915693FA7EBB1 /* EditorStyler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorStyler.swift; sourceTree = "<group>"; };
+		A6F47EA458A587DE658DA260 /* IBMPlexMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-Regular.ttf"; sourceTree = "<group>"; };
 		A818A1E4233A0221DE14323F /* TableOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableOverlayView.swift; sourceTree = "<group>"; };
+		AAB462AE787EFE81200A98E1 /* JetBrainsMono[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono[wght].ttf"; sourceTree = "<group>"; };
 		B17989DDD758FF6619372CD3 /* ParagraphTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParagraphTests.swift; sourceTree = "<group>"; };
 		C4819C256EEBDE1176786EA4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		C8BCF9F6ED0A88FDCF044A29 /* IBMPlexMono-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-Bold.ttf"; sourceTree = "<group>"; };
 		D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
+		DFAB8DC78977B6E9410F8709 /* IBMPlexSans-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "IBMPlexSans-OFL.txt"; sourceTree = "<group>"; };
+		E08452B54F3CA78B4D68312B /* GeistMono-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GeistMono-Italic[wght].ttf"; sourceTree = "<group>"; };
 		E9715F52408350CB000B481D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		EE74859EBF33BCD9B7C83F9B /* ClaudetteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudetteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F2D6B3B208061A672D0A4283 /* IBMPlexMono-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "IBMPlexMono-OFL.txt"; sourceTree = "<group>"; };
 		F7814F2703382C891EDDC610 /* CaretTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaretTests.swift; sourceTree = "<group>"; };
 		FA5F101BB4C638D9E7178C4F /* ThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeTests.swift; sourceTree = "<group>"; };
+		FDA016501C14EAB655624BD2 /* IBMPlexSans-Italic[wdth,wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexSans-Italic[wdth,wght].ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +117,33 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		208248E3AE7AC88FC5C97E2A /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				0B581B0DA980BDC3A1DB2F22 /* AtkinsonHyperlegibleNext-Italic[wght].ttf */,
+				42254BC4ECD9559141DF391B /* AtkinsonHyperlegibleNext-OFL.txt */,
+				12A07D8B779FEAC1A331A035 /* AtkinsonHyperlegibleNext[wght].ttf */,
+				5EE10C310B2B43A4ED85F341 /* Geist-Italic[wght].ttf */,
+				2616A19BD427A3B67AE3B94D /* Geist-OFL.txt */,
+				4BC5945C3C2FB3DD3D0AA2E6 /* Geist[wght].ttf */,
+				E08452B54F3CA78B4D68312B /* GeistMono-Italic[wght].ttf */,
+				411D6E3AEF8DA821FDFC63BD /* GeistMono-OFL.txt */,
+				438CCFB4AD275C881EC89E07 /* GeistMono[wght].ttf */,
+				C8BCF9F6ED0A88FDCF044A29 /* IBMPlexMono-Bold.ttf */,
+				686721175B082A3CD208B06D /* IBMPlexMono-BoldItalic.ttf */,
+				8FA0DA4D86C871865A0A6AF1 /* IBMPlexMono-Italic.ttf */,
+				F2D6B3B208061A672D0A4283 /* IBMPlexMono-OFL.txt */,
+				A6F47EA458A587DE658DA260 /* IBMPlexMono-Regular.ttf */,
+				FDA016501C14EAB655624BD2 /* IBMPlexSans-Italic[wdth,wght].ttf */,
+				DFAB8DC78977B6E9410F8709 /* IBMPlexSans-OFL.txt */,
+				28F5AE0FD2D2685603753EFF /* IBMPlexSans[wdth,wght].ttf */,
+				2AD2D3024694420D4879750F /* JetBrainsMono-Italic[wght].ttf */,
+				4BC9F1E7148162EDE1EE2D9A /* JetBrainsMono-OFL.txt */,
+				AAB462AE787EFE81200A98E1 /* JetBrainsMono[wght].ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
 		5456837F1D6109EF010D23F8 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
@@ -122,6 +189,7 @@
 				841420B921672F16E1F5D936 /* Snapshot.swift */,
 				C4819C256EEBDE1176786EA4 /* Theme.swift */,
 				ED887FE18AD9F24BBF7DF214 /* Editor */,
+				208248E3AE7AC88FC5C97E2A /* Fonts */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -172,6 +240,7 @@
 			buildConfigurationList = 1BA7271FE60D35A941D8AA84 /* Build configuration list for PBXNativeTarget "Claudette" */;
 			buildPhases = (
 				7748CEF671E5683442DF00F0 /* Sources */,
+				70FF860E70EAE4B4258B1BF2 /* Resources */,
 				87CCD4DCD45938A047BB417E /* Frameworks */,
 			);
 			buildRules = (
@@ -227,6 +296,36 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		70FF860E70EAE4B4258B1BF2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				72E41326F5724B84FF740E1F /* AtkinsonHyperlegibleNext-Italic[wght].ttf in Resources */,
+				473B73939A6A22DFBF9D3CC4 /* AtkinsonHyperlegibleNext-OFL.txt in Resources */,
+				6DC23D45A3BE360EDE9A9D7D /* AtkinsonHyperlegibleNext[wght].ttf in Resources */,
+				0E38A23CEDA871AB4BA2496A /* Geist-Italic[wght].ttf in Resources */,
+				52385B554F5710B809F56AD6 /* Geist-OFL.txt in Resources */,
+				940FA2A577F8DBBAE5E884A7 /* GeistMono-Italic[wght].ttf in Resources */,
+				0A45766E1BB3DA9C8E76E5F1 /* GeistMono-OFL.txt in Resources */,
+				E4BF84F193C79524F515D75D /* GeistMono[wght].ttf in Resources */,
+				D53D0FD3F8A3EA236F6A23E1 /* Geist[wght].ttf in Resources */,
+				67D633573EDFD173843A1D83 /* IBMPlexMono-Bold.ttf in Resources */,
+				2F65B9D29ED69E525C74F3F3 /* IBMPlexMono-BoldItalic.ttf in Resources */,
+				1E007A53D7E04A3F1625C2A9 /* IBMPlexMono-Italic.ttf in Resources */,
+				6057C59D3A31DB3B15C67764 /* IBMPlexMono-OFL.txt in Resources */,
+				211D2E2EF3388BCB14B53A6E /* IBMPlexMono-Regular.ttf in Resources */,
+				6509076BFB32412A676C878F /* IBMPlexSans-Italic[wdth,wght].ttf in Resources */,
+				5FE6E48ACCB163F2F5386735 /* IBMPlexSans-OFL.txt in Resources */,
+				89CE99D5BBCDBA9F17B95CF0 /* IBMPlexSans[wdth,wght].ttf in Resources */,
+				3D9FF715F48753E2D69795E2 /* JetBrainsMono-Italic[wght].ttf in Resources */,
+				4D34D7A9629A5055E804620B /* JetBrainsMono-OFL.txt in Resources */,
+				6C792218CE729EAD897233E8 /* JetBrainsMono[wght].ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		7748CEF671E5683442DF00F0 /* Sources */ = {

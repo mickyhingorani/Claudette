@@ -46,7 +46,7 @@ final class AppModel: ObservableObject {
             defaults.set(viewMode.rawValue, forKey: Key.viewMode)
         }
     }
-    @Published var themeID = Theme.ink.id {
+    @Published var themeID = Theme.default.id {
         didSet {
             editor.theme = theme
             defaults.set(themeID, forKey: Key.theme)
@@ -69,7 +69,7 @@ final class AppModel: ObservableObject {
     init(defaults: UserDefaults, starterFolder: URL, watchesFolders: Bool) {
         self.defaults = defaults
         (scrollView, editor) = EditorTextView.makeInScrollView()
-        themeID = defaults.string(forKey: Key.theme) ?? Theme.ink.id
+        themeID = defaults.string(forKey: Key.theme) ?? Theme.default.id
         viewMode = ViewMode(rawValue: defaults.string(forKey: Key.viewMode) ?? "") ?? .formatted
         if defaults.object(forKey: Key.fileListWidth) != nil {
             fileListWidth = CGFloat(defaults.double(forKey: Key.fileListWidth))

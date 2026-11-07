@@ -15,16 +15,59 @@ final class ThemeTests: XCTestCase {
     }
 
     func testAllThemesAreOffered() {
-        XCTAssertEqual(Theme.all.map(\.name), ["Ink", "Slate", "Nord", "Solarized", "Terminal"])
+        XCTAssertEqual(Theme.all.map(\.name), ["Slate", "Nord", "Solarized", "Terminal"])
+    }
+
+    func testSlateIsTheDefault() {
+        XCTAssertEqual(Theme.default, .slate)
+    }
+
+    func testRemovedInkThemeFallsBackToTheDefault() {
+        XCTAssertEqual(Theme.named("ink"), .slate)
     }
 
     func testEachThemeHasItsOwnFont() {
         XCTAssertEqual(Set(Theme.all.map { $0.bodyFont.familyName }).count, Theme.all.count)
     }
 
-    func testThemeFontsAreTheOnesAskedFor() {
-        XCTAssertEqual(Theme.named("nord").bodyFont.familyName, "Avenir Next")
-        XCTAssertEqual(Theme.named("solarized").bodyFont.familyName, "Charter")
+    /// Headings, body text and code, as the bundled fonts' family names.
+    func testThemeFontsAreTheOnesChosen() {
+        let fonts = Theme.all.map { [$0.headingFont.familyName, $0.bodyFont.familyName, $0.monoFont.familyName] }
+        XCTAssertEqual(fonts, [
+            ["Atkinson Hyperlegible Next", "Atkinson Hyperlegible Next", "JetBrains Mono"],
+            ["Geist", "Geist", "Geist Mono"],
+            ["IBM Plex Sans", "IBM Plex Sans", "IBM Plex Mono"],
+            ["JetBrains Mono", "JetBrains Mono", "JetBrains Mono"],
+        ])
+    }
+
+    func testEveryThemeFontHasBoldAndItalic() {
+        let manager = NSFontManager.shared
+        for theme in Theme.all {
+            for font in [theme.bodyFont, theme.monoFont] {
+                let bold = manager.convert(font, toHaveTrait: .boldFontMask)
+                let italic = manager.convert(font, toHaveTrait: .italicFontMask)
+                XCTAssertTrue(manager.traits(of: bold).contains(.boldFontMask), "\(theme.name) \(font.fontName)")
+                XCTAssertTrue(manager.traits(of: italic).contains(.italicFontMask), "\(theme.name) \(font.fontName)")
+                XCTAssertEqual(bold.familyName, font.familyName)
+            }
+        }
+    }
+
+    /// Code shows `=>` and `!=` as typed, not as arrow and not-equal symbols.
+    func testCodeFontsKeepOperatorsAsTyped() {
+        for theme in Theme.all {
+            for font in [theme.monoFont, theme.bodyFont] where font.isFixedPitch {
+                let text = NSAttributedString(string: "=>", attributes: [.font: font])
+                let line = CTLineCreateWithAttributedString(text)
+                let runs = CTLineGetGlyphRuns(line) as! [CTRun]
+                var glyphs = [CGGlyph](repeating: 0, count: 2)
+                CTRunGetGlyphs(runs[0], CFRange(location: 0, length: 2), &glyphs)
+                var plain = [CGGlyph](repeating: 0, count: 2)
+                CTFontGetGlyphsForCharacters(font as CTFont, Array("=>".utf16), &plain, 2)
+                XCTAssertEqual(glyphs, plain, "\(theme.name) \(font.fontName)")
+            }
+        }
     }
 
     func testTextIsReadableInEveryTheme() {
@@ -63,5 +106,64 @@ final class ThemeTests: XCTestCase {
 
     func testEachThemeHasItsOwnColors() {
         XCTAssertEqual(Set(Theme.all.map { $0.palette.heading1 }).count, Theme.all.count)
+    }
+}
+
+@MainActor
+final class ThemeFontEditorTests: XCTestCase {
+    private func glyphs(_ string: String, in editor: EditorTextView, at location: Int) -> (shown: [CGGlyph], plain: [CGGlyph]) {
+        let font = editor.textStorage!.attribute(.font, at: location, effectiveRange: nil) as! NSFont
+        let text = NSAttributedString(string: string, attributes: [.font: font])
+        let run = (CTLineGetGlyphRuns(CTLineCreateWithAttributedString(text)) as! [CTRun])[0]
+        var shown = [CGGlyph](repeating: 0, count: 2)
+        CTRunGetGlyphs(run, CFRange(location: 0, length: 2), &shown)
+        var plain = [CGGlyph](repeating: 0, count: 2)
+        CTFontGetGlyphsForCharacters(font as CTFont, Array(string.utf16), &plain, 2)
+        return (shown, plain)
+    }
+
+    func testBoldTerminalTextKeepsOperatorsAsTyped() {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.theme = .terminal
+        editor.load(text: "**a => b**")
+        let result = glyphs("=>", in: editor, at: 4)
+        XCTAssertEqual(result.shown, result.plain)
+    }
+
+    func testCodeBlockKeepsOperatorsAsTyped() {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.theme = .solarized
+        editor.load(text: "```\na != b\n```\n")
+        let result = glyphs("!=", in: editor, at: 6)
+        XCTAssertEqual(result.shown, result.plain)
+    }
+
+    func testHeadingsUseTheThemesHeadingFont() {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.theme = .solarized
+        editor.load(text: "# Title\n\nbody\n")
+        let heading = editor.textStorage!.attribute(.font, at: 3, effectiveRange: nil) as! NSFont
+        let body = editor.textStorage!.attribute(.font, at: 10, effectiveRange: nil) as! NSFont
+        XCTAssertEqual(heading.familyName, "IBM Plex Sans")
+        XCTAssertEqual(body.familyName, "IBM Plex Sans")
+        XCTAssertGreaterThan(heading.pointSize, body.pointSize)
+    }
+}
+
+@MainActor
+final class CodeLineSpacingTests: XCTestCase {
+    /// Code fonts differ in how much space they build in, so code lines get the same rhythm in every theme.
+    func testCodeLinesAreOneAndAHalfTimesTheFontSize() {
+        for theme in Theme.all {
+            let (_, editor) = EditorTextView.makeInScrollView()
+            editor.frame = NSRect(x: 0, y: 0, width: 600, height: 400)
+            editor.theme = theme
+            editor.load(text: "```\na\nb\nc\n```\n")
+            let layout = editor.hidingLayoutManager
+            layout.ensureLayout(for: editor.textContainer!)
+            let font = editor.textStorage!.attribute(.font, at: 6, effectiveRange: nil) as! NSFont
+            let line = layout.lineFragmentRect(forGlyphAt: layout.glyphIndexForCharacter(at: 6), effectiveRange: nil)
+            XCTAssertEqual(line.height, (font.pointSize * 1.55).rounded(), accuracy: 0.5, theme.name)
+        }
     }
 }

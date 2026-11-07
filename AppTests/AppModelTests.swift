@@ -334,6 +334,15 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(second.editor.theme.id, "terminal")
     }
 
+    func testFirstLaunchUsesSlate() {
+        XCTAssertEqual(makeModel().editor.theme.id, "slate")
+    }
+
+    func testSavedInkThemeOpensAsSlate() {
+        defaults.set("ink", forKey: "theme")
+        XCTAssertEqual(makeModel().editor.theme.id, "slate")
+    }
+
     func testMissingLastFileFallsBackCleanly() throws {
         let model = makeModel()
         let file = try write("x", "a.md", in: starter)
