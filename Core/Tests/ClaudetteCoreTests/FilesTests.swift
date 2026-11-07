@@ -64,6 +64,15 @@ private func write(_ text: String, _ name: String, in folder: URL, age: TimeInte
         #expect(try FolderScanner.scan(folder).first?.url == URL(fileURLWithPath: file.path))
     }
 
+    @Test func scanListsSymlinkUnderItsOwnURL() throws {
+        let folder = try tempFolder()
+        let real = try write("", "real.md", in: folder)
+        let link = folder.appendingPathComponent("link.md")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: real)
+        let urls = Set(try FolderScanner.scan(folder).map(\.url.lastPathComponent))
+        #expect(urls == ["real.md", "link.md"])
+    }
+
     @Test func scanIgnoresOtherFiles() throws {
         let folder = try tempFolder()
         _ = try write("", "a.txt", in: folder)
@@ -175,9 +184,28 @@ private func write(_ text: String, _ name: String, in folder: URL, age: TimeInte
     @Test func saveConflictCopyWritesBesideFile() throws {
         let file = try write("a", "Name.md", in: try tempFolder())
         let document = try DocumentFile(url: file)
-        let copy = try document.saveConflictCopy("theirs")
+        try Data("theirs".utf8).write(to: file)
+        let copy = try document.saveConflictCopy()
         #expect(copy.lastPathComponent == "Name (conflict).md")
         #expect(try String(contentsOf: copy, encoding: .utf8) == "theirs")
+    }
+
+    @Test func conflictCopyKeepsTheOtherBytes() throws {
+        let file = try write("a", "Name.md", in: try tempFolder())
+        let document = try DocumentFile(url: file)
+        let bytes = Data([0x63, 0xE9, 0x20])
+        try bytes.write(to: file)
+        #expect(try Data(contentsOf: try document.saveConflictCopy()) == bytes)
+    }
+
+    @Test func saveThroughSymlinkKeepsTheLink() throws {
+        let folder = try tempFolder()
+        let real = try write("a", "real.md", in: folder)
+        let link = folder.appendingPathComponent("link.md")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: real)
+        try DocumentFile(url: link).save("edited")
+        #expect(try String(contentsOf: real, encoding: .utf8) == "edited")
+        #expect(try FileManager.default.destinationOfSymbolicLink(atPath: link.path) == real.path)
     }
 
     @Test func saveRecreatesMissingFile() throws {

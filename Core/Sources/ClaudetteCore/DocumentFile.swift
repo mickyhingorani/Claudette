@@ -35,7 +35,8 @@ public final class DocumentFile {
         let data = Data(newText.utf8)
         let isOnDisk = FileManager.default.fileExists(atPath: url.path)
         if data == diskData, isOnDisk { return }
-        try data.write(to: url, options: .atomic)
+        // Write to a link's target: an atomic write would replace the link with a file.
+        try data.write(to: url.resolvingSymlinksInPath(), options: .atomic)
         diskData = data
         text = newText
     }
@@ -53,9 +54,10 @@ public final class DocumentFile {
     }
 
     @discardableResult
-    public func saveConflictCopy(_ otherText: String) throws -> URL {
+    public func saveConflictCopy() throws -> URL {
         let copy = FileNaming.conflictURL(for: url)
-        try Data(otherText.utf8).write(to: copy, options: .atomic)
+        // The other version's exact bytes: it may not be text this app can read.
+        try Data(contentsOf: url).write(to: copy, options: .atomic)
         return copy
     }
 }

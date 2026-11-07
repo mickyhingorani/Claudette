@@ -267,6 +267,16 @@ private struct Walker: MarkupWalker {
         guard let range = nsRange(table), let block = TableBlock.parse(ns, range: range) else { return }
         map.tables.append(block)
         map.spans.append(StyledSpan(range: block.delimiterLine, kind: .syntax))
+        // The parser folds a paragraph directly above a table into the table, so scan it here.
+        let leadLength = block.range.location - range.location
+        if leadLength > 0 {
+            let lead = NSRange(location: range.location, length: leadLength)
+            let above = MarkdownScanner.scan(ns.substring(with: lead)).shifted(by: lead.location)
+            map.spans += above.spans
+            map.hidden += above.hidden
+            map.substitutions += above.substitutions
+            map.taskBoxes += above.taskBoxes
+        }
     }
 }
 

@@ -39,7 +39,8 @@ public enum FolderScanner {
     /// folder as connected. Then it equals any other URL made for the same file.
     private static func plainURL(of url: URL, in folder: URL) -> URL {
         let base = folder.resolvingSymlinksInPath().path + "/"
-        let path = url.resolvingSymlinksInPath().path
+        // Only the parent is resolved: a link to a file is listed as the link itself.
+        let path = url.deletingLastPathComponent().resolvingSymlinksInPath().path + "/" + url.lastPathComponent
         guard path.hasPrefix(base) else { return URL(fileURLWithPath: url.path) }
         let parent = folder.path.hasSuffix("/") ? folder.path : folder.path + "/"
         return URL(fileURLWithPath: parent + path.dropFirst(base.count))

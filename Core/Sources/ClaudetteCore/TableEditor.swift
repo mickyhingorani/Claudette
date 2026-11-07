@@ -7,6 +7,7 @@ public enum TableEditor {
         let new = sanitize(text)
         let cell = table.cell(row: row, column: column)
         if cell.isPadding {
+            if new.isEmpty { return [] }
             return fillPadding(table, row: row, column: column, text: new)
         }
         if new == cell.text { return [] }
@@ -48,19 +49,26 @@ public enum TableEditor {
     public static func deleteColumn(_ table: TableBlock, column: Int) -> [TextEdit] {
         guard table.columnCount > 1 else { return [] }
         var edits: [TextEdit] = []
-        func remove(from cells: [TableCell]) {
+        func remove(from cells: [TableCell], endsWithPipe: Bool) {
             let real = cells.filter { !$0.isPadding }
             guard column < real.count else { return }
             let bounds = real[column].cellRange
             // Take one pipe with the cell: the one before it, or after it for the first column.
-            let range = column > 0
-                ? NSRange(location: bounds.location - 1, length: bounds.length + 1)
-                : NSRange(location: bounds.location, length: bounds.length + 1)
+            // A lone cell with no closing pipe has no pipe after it to take.
+            let hasPipeAfter = real.count > 1 || endsWithPipe
+            let range: NSRange
+            if column > 0 {
+                range = NSRange(location: bounds.location - 1, length: bounds.length + 1)
+            } else {
+                range = NSRange(location: bounds.location, length: bounds.length + (hasPipeAfter ? 1 : 0))
+            }
             edits.append(TextEdit(range: range, replacement: ""))
         }
-        remove(from: table.header)
-        remove(from: table.delimiterCells)
-        table.rows.forEach(remove)
+        remove(from: table.header, endsWithPipe: table.rowEndsWithPipe[0])
+        remove(from: table.delimiterCells, endsWithPipe: table.rowEndsWithPipe[0])
+        for (index, row) in table.rows.enumerated() {
+            remove(from: row, endsWithPipe: table.rowEndsWithPipe[index + 1])
+        }
         return lastFirst(edits)
     }
 

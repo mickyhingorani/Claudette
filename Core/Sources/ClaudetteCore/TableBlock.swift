@@ -78,7 +78,12 @@ extension TableBlock {
             lines.append((content, cells, endsWithPipe))
             location = max(NSMaxRange(full), lineEnd)
         }
-        guard lines.count >= 2 else { return nil }
+        // The parser's range can start at a paragraph directly above the table.
+        // The real table starts one line above its delimiter row.
+        guard let delimiter = lines.indices.dropFirst().first(where: { isDelimiterRow(lines[$0].cells) }) else { return nil }
+        lines.removeFirst(delimiter - 1)
+        let tableStart = lines[0].content.location
+        let tableRange = NSRange(location: tableStart, length: NSMaxRange(range) - tableStart)
         let header = lines[0].cells
         let bodies = lines.dropFirst(2).map { line -> [TableCell] in
             var cells = Array(line.cells.prefix(header.count))
@@ -91,7 +96,7 @@ extension TableBlock {
         }
         let rowLines = [lines[0]] + lines.dropFirst(2)
         return TableBlock(
-            range: range, header: header, rows: bodies,
+            range: tableRange, header: header, rows: bodies,
             alignments: (0..<header.count).map { index in
                 index < lines[1].cells.count ? alignment(of: lines[1].cells[index].text) : .left
             },
@@ -99,6 +104,12 @@ extension TableBlock {
             rowLines: rowLines.map(\.content), delimiterLine: lines[1].content,
             rowEndsWithPipe: rowLines.map(\.endsWithPipe),
             lineEnding: lineEnding, linePrefix: linePrefix)
+    }
+
+    private static func isDelimiterRow(_ cells: [TableCell]) -> Bool {
+        !cells.isEmpty && cells.allSatisfy { cell in
+            cell.text.contains("-") && cell.text.allSatisfy { $0 == "-" || $0 == ":" }
+        }
     }
 
     private static func isNewline(_ unit: unichar) -> Bool { unit == 0x0A || unit == 0x0D }

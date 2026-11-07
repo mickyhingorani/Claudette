@@ -185,4 +185,41 @@ private let basic = "before\n\n| A | B |\n|---|:-:|\n| 1 | 2 |\n| 3 | 4 |\n\naft
     @Test func onlyColumnCannotBeDeleted() throws {
         #expect(TableEditor.deleteColumn(try table("| a |\n|---|\n"), column: 0).isEmpty)
     }
+
+    @Test func tableBelowTextStartsAtItsHeader() throws {
+        let text = "Here are the results:\n| Name | Score |\n|---|---|\n| Ann | 10 |\n"
+        let t = try table(text)
+        #expect(t.header.map(\.text) == ["Name", "Score"])
+        #expect(t.rows.map { $0.map(\.text) } == [["Ann", "10"]])
+        #expect((text as NSString).substring(with: t.range).hasPrefix("| Name"))
+    }
+
+    @Test func textAboveTableKeepsItsStyling() {
+        let map = MarkdownScanner.scan("**a**\n| x |\n|---|\n| 1 |\n")
+        #expect(map.spans.contains { $0.kind == .strong })
+    }
+
+    @Test func tableBelowTextInBlockquote() throws {
+        let t = try table("> intro\n> | a |\n> |---|\n> | 1 |\n")
+        #expect(t.header.map(\.text) == ["a"])
+        #expect(t.rows[0].map(\.text) == ["1"])
+    }
+
+    @Test func setEmptyPaddingCellChangesNothing() throws {
+        let t = try table("| a | b |\n|---|---|\n| 1 |\n")
+        #expect(TableEditor.setCell(t, row: 1, column: 1, text: "").isEmpty)
+    }
+
+    @Test func deleteColumnKeepsLineAfterShortRow() throws {
+        let text = "| a | b |\n|---|---|\n| 1\n| 3 | 4 |\n"
+        let result = apply(TableEditor.deleteColumn(try table(text), column: 0), to: text)
+        #expect(result.contains("\n| 4 |"))
+        #expect(result.components(separatedBy: "\n").count == 5)
+    }
+
+    @Test func deleteColumnOnShortLastRowStaysInBounds() throws {
+        let text = "| a | b |\n|---|---|\n| 1"
+        let edits = TableEditor.deleteColumn(try table(text), column: 0)
+        #expect(edits.allSatisfy { NSMaxRange($0.range) <= (text as NSString).length })
+    }
 }

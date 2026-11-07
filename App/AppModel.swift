@@ -277,14 +277,14 @@ final class AppModel: ObservableObject {
     }
 
     private func saveExisting(_ document: DocumentFile, text: String) throws {
-        if case .changed(let other) = document.checkDisk() {
+        if case .changed = document.checkDisk() {
             if text == document.text {
                 // The edits were undone, so nothing of Micky's is at stake.
                 reloadFromDisk(document)
                 isDirty = false
                 return
             }
-            let copy = try document.saveConflictCopy(other)
+            let copy = try document.saveConflictCopy()
             notice = "Changed elsewhere too: saved the other version as \(copy.lastPathComponent)"
         }
         try document.save(text)
