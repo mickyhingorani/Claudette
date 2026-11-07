@@ -27,11 +27,21 @@ public enum FolderScanner {
                 continue
             }
             guard url.pathExtension.lowercased() == "md" else { continue }
-            files.append(ListedFile(url: url, displayName: url.deletingPathExtension().lastPathComponent,
+            files.append(ListedFile(url: plainURL(of: url, in: folder), displayName: url.deletingPathExtension().lastPathComponent,
                                     modified: values?.contentModificationDate ?? .distantPast))
         }
         return files.sorted {
             $0.modified != $1.modified ? $0.modified > $1.modified : $0.displayName < $1.displayName
         }
+    }
+
+    /// The enumerator can resolve symlinks in a folder's path, so rebuild the URL from the
+    /// folder as connected. Then it equals any other URL made for the same file.
+    private static func plainURL(of url: URL, in folder: URL) -> URL {
+        let base = folder.resolvingSymlinksInPath().path + "/"
+        let path = url.resolvingSymlinksInPath().path
+        guard path.hasPrefix(base) else { return URL(fileURLWithPath: url.path) }
+        let parent = folder.path.hasSuffix("/") ? folder.path : folder.path + "/"
+        return URL(fileURLWithPath: parent + path.dropFirst(base.count))
     }
 }

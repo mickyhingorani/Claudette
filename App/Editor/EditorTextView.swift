@@ -7,6 +7,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     let styler = EditorStyler()
     private let documentUndo = UndoManager()
     var onTextChange: ((String) -> Void)?
+    var onDropURLs: (([URL]) -> Void)?
     private(set) var tableOverlays: [TableOverlayView] = []
 
     var hidingLayoutManager: HidingLayoutManager { layoutManager as! HidingLayoutManager }
@@ -69,6 +70,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         autoresizingMask = [.width]
         minSize = NSSize(width: 0, height: 0)
         maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        registerForDraggedTypes([.fileURL, .string])
         applyThemeChrome()
         restyle()
     }
@@ -306,5 +308,26 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
             }
         }
         super.mouseDown(with: event)
+    }
+
+    // MARK: Dropped files
+
+    private func droppedURLs(_ sender: NSDraggingInfo) -> [URL] {
+        sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+    }
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        droppedURLs(sender).isEmpty ? super.draggingEntered(sender) : .copy
+    }
+
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        droppedURLs(sender).isEmpty ? super.draggingUpdated(sender) : .copy
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let urls = droppedURLs(sender)
+        guard !urls.isEmpty else { return super.performDragOperation(sender) }
+        onDropURLs?(urls)
+        return true
     }
 }

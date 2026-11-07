@@ -58,6 +58,12 @@ private func write(_ text: String, _ name: String, in folder: URL, age: TimeInte
         #expect(try FolderScanner.scan(folder).map(\.displayName) == ["new", "old"])
     }
 
+    @Test func scanURLsEqualPlainFileURLs() throws {
+        let folder = try tempFolder()
+        let file = try write("", "sub/a.md", in: folder)
+        #expect(try FolderScanner.scan(folder).first?.url == URL(fileURLWithPath: file.path))
+    }
+
     @Test func scanIgnoresOtherFiles() throws {
         let folder = try tempFolder()
         _ = try write("", "a.txt", in: folder)

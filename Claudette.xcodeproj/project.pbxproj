@@ -11,13 +11,18 @@
 		0A37619B421209992759C727 /* EditorStyler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E60578DCA7915693FA7EBB1 /* EditorStyler.swift */; };
 		1FA4279C34C5C46E5627DCB1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4819C256EEBDE1176786EA4 /* Theme.swift */; };
 		24C7F9B99A96F42B97536E06 /* EditorTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818CC86FF5295B038D507C33 /* EditorTextView.swift */; };
+		32B06F452D7980FFDA905FB3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */; };
 		350B6C47BCB3047D0F44C67A /* HidingLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4097A68E275D263A6D78F5 /* HidingLayoutManager.swift */; };
+		379AE30927A3A4076AA44076 /* FolderWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD423DB075FF474B94C7621 /* FolderWatcher.swift */; };
 		501683150F9D895D2FBF86DE /* TableEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */; };
+		7A79FC0F741B39CE04789344 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9715F52408350CB000B481D /* AppModel.swift */; };
 		C960C7B815F9E827E741C78E /* ClaudetteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */; };
 		D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */; };
 		D9D1ED470E53BABC4EC71936 /* EditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D9C0257768097483F1AE63 /* EditorTests.swift */; };
 		E0F36871D565C8F6F97C73F3 /* TableOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A818A1E4233A0221DE14323F /* TableOverlayView.swift */; };
+		E2B5C73FAE83CDCF10B24703 /* AppModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B7CC701012237EF000CD8E8 /* AppModelTests.swift */; };
 		E9757EC2C7B88B987A2FCEEC /* Snapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841420B921672F16E1F5D936 /* Snapshot.swift */; };
+		EC9FF80388CCF0084AA008B5 /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55A5438F65AE9739BCE3AEE1 /* FileListView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,7 +36,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		1B7CC701012237EF000CD8E8 /* AppModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelTests.swift; sourceTree = "<group>"; };
 		25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableEditingTests.swift; sourceTree = "<group>"; };
+		2FD423DB075FF474B94C7621 /* FolderWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderWatcher.swift; sourceTree = "<group>"; };
+		55A5438F65AE9739BCE3AEE1 /* FileListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
 		57AF89E94939D999B66B13C8 /* Claudette.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Claudette.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E4686DDE37BF53C77F82A85 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
 		818CC86FF5295B038D507C33 /* EditorTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTextView.swift; sourceTree = "<group>"; };
@@ -44,6 +53,7 @@
 		A818A1E4233A0221DE14323F /* TableOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableOverlayView.swift; sourceTree = "<group>"; };
 		C4819C256EEBDE1176786EA4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
+		E9715F52408350CB000B481D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		EE74859EBF33BCD9B7C83F9B /* ClaudetteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudetteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -80,6 +90,7 @@
 		9234E8E70C6E75F639264536 /* AppTests */ = {
 			isa = PBXGroup;
 			children = (
+				1B7CC701012237EF000CD8E8 /* AppModelTests.swift */,
 				96D9C0257768097483F1AE63 /* EditorTests.swift */,
 				D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */,
 				25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */,
@@ -90,8 +101,12 @@
 		A08B3E6375956C30BC810D5C /* App */ = {
 			isa = PBXGroup;
 			children = (
+				E9715F52408350CB000B481D /* AppModel.swift */,
 				84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */,
+				55A5438F65AE9739BCE3AEE1 /* FileListView.swift */,
+				2FD423DB075FF474B94C7621 /* FolderWatcher.swift */,
 				872C2316D731CE800F69D51A /* Info.plist */,
+				18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */,
 				841420B921672F16E1F5D936 /* Snapshot.swift */,
 				C4819C256EEBDE1176786EA4 /* Theme.swift */,
 				ED887FE18AD9F24BBF7DF214 /* Editor */,
@@ -206,10 +221,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A79FC0F741B39CE04789344 /* AppModel.swift in Sources */,
 				C960C7B815F9E827E741C78E /* ClaudetteApp.swift in Sources */,
 				0A37619B421209992759C727 /* EditorStyler.swift in Sources */,
 				24C7F9B99A96F42B97536E06 /* EditorTextView.swift in Sources */,
+				EC9FF80388CCF0084AA008B5 /* FileListView.swift in Sources */,
+				379AE30927A3A4076AA44076 /* FolderWatcher.swift in Sources */,
 				350B6C47BCB3047D0F44C67A /* HidingLayoutManager.swift in Sources */,
+				32B06F452D7980FFDA905FB3 /* RootView.swift in Sources */,
 				E9757EC2C7B88B987A2FCEEC /* Snapshot.swift in Sources */,
 				E0F36871D565C8F6F97C73F3 /* TableOverlayView.swift in Sources */,
 				1FA4279C34C5C46E5627DCB1 /* Theme.swift in Sources */,
@@ -220,6 +239,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2B5C73FAE83CDCF10B24703 /* AppModelTests.swift in Sources */,
 				D9D1ED470E53BABC4EC71936 /* EditorTests.swift in Sources */,
 				D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */,
 				501683150F9D895D2FBF86DE /* TableEditingTests.swift in Sources */,
