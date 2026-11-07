@@ -29,6 +29,14 @@ private func hidden(_ text: String) -> [NSRange] {
         #expect(map.spans.contains(StyledSpan(range: r(0, 8), kind: .heading(level: 2))))
     }
 
+    @Test func emptyHeadingHidesItsSpaceToo() {
+        #expect(hidden("# ") == [r(0, 2)])
+    }
+
+    @Test func hashWithoutSpaceStaysVisible() {
+        #expect(hidden("#").isEmpty)
+    }
+
     @Test func setextHeadingHidesNothing() {
         let map = MarkdownScanner.scan("Title\n===\n")
         #expect(map.hidden.isEmpty)
@@ -56,8 +64,39 @@ private func hidden(_ text: String) -> [NSRange] {
         #expect(map.spans.contains(StyledSpan(range: r(0, 12), kind: .codeBlock)))
     }
 
-    @Test func unclosedFenceHidesOnlyOpening() {
-        #expect(hidden("```\ncode") == [r(0, 4)])
+    @Test func codeBlockKnowsItsLanguageAndContent() {
+        let block = MarkdownScanner.scan("```html\n<a>\n```\n").codeBlocks.first
+        #expect(block?.language == "html")
+        #expect(block?.contentRange == r(8, 3))
+    }
+
+    @Test func codeBlockWithoutLabelHasNoLanguage() {
+        #expect(MarkdownScanner.scan("```\nx\n```\n").codeBlocks.first?.language == nil)
+    }
+
+    @Test func indentedCodeBlockContentIsItsRange() {
+        let block = MarkdownScanner.scan("a\n\n    x\n").codeBlocks.first
+        #expect(block?.contentRange == block?.range)
+    }
+
+    @Test func unclosedCodeBlockContentRunsToTheEnd() {
+        #expect(MarkdownScanner.scan("```js\nx").codeBlocks.first?.contentRange == r(6, 1))
+    }
+
+    @Test func codeBlockContentExactWithCRLF() {
+        #expect(MarkdownScanner.scan("```js\r\nx\r\n```\r\n").codeBlocks.first?.contentRange == r(7, 1))
+    }
+
+    @Test func unclosedFenceStaysVisible() {
+        #expect(hidden("```\ncode") == [])
+    }
+
+    @Test func closedCodeBlockKnowsItIsClosed() {
+        #expect(MarkdownScanner.scan("```\nx\n```\n").codeBlocks.first?.isClosed == true)
+    }
+
+    @Test func unclosedCodeBlockKnowsItIsOpen() {
+        #expect(MarkdownScanner.scan("```html\n<p>x</p>\n\n\n").codeBlocks.first?.isClosed == false)
     }
 
     @Test func bulletSubstituted() {

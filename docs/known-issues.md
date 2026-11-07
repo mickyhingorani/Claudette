@@ -31,4 +31,5 @@ Minor items from the independent code review of the MVP, left for later.
 ## Look
 
 - No app icon yet.
+- An inline code chip that wraps across two lines runs a little past its text on the first line.
 - Ink's Markdown syntax color is close to its text color.

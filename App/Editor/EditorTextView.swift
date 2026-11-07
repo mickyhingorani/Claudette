@@ -87,9 +87,10 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         insertionPointColor = theme.accent
         selectedTextAttributes = [.backgroundColor: theme.line]
         hidingLayoutManager.codeBackground = theme.panel
+        hidingLayoutManager.chipBackground = theme.chip
         hidingLayoutManager.ruleColor = theme.line
-        hidingLayoutManager.quoteBarColor = theme.line
-        hidingLayoutManager.underlineColor = theme.accent
+        hidingLayoutManager.quoteBarColor = theme.palette.quoteBar
+        hidingLayoutManager.underlineColor = theme.palette.link
         hidingLayoutManager.strikeColor = theme.soft
     }
 
@@ -166,6 +167,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         let selection = isFreshlyLoaded ? NSRange(location: NSNotFound, length: 0) : selectedRange()
         let display = styler.display(selection: selection)
         hidingLayoutManager.decorations = styler.decorations
+        hidingLayoutManager.emptyLineFont = styler.emptyLineFont
+        hidingLayoutManager.paragraphGap = styler.paragraphGap
         hidingLayoutManager.setDisplay(hidden: display.hidden, substitutions: display.substitutions, invalidate: invalidate)
     }
 
@@ -246,6 +249,78 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         super.viewWillDraw()
     }
 
+    /// Heading marks that stay hidden in this view. The caret never goes inside one.
+    private var hiddenHeadingMarks: [NSRange] {
+        guard viewMode == .formatted else { return [] }
+        return styler.map.hidden.filter { $0.kind == .headingMark }.map(\.range)
+    }
+
+    /// Where the caret goes instead of landing inside a heading's hidden mark.
+    private func caretOutsideHeadingMarks(_ location: Int) -> Int {
+        guard let mark = hiddenHeadingMarks.first(where: { NSLocationInRange(location, $0) }) else { return location }
+        let isSteppingLeft = selectedRange().location == NSMaxRange(mark) && location == NSMaxRange(mark) - 1
+        guard isSteppingLeft, mark.location > 0 else { return NSMaxRange(mark) }
+        let ns = string as NSString
+        var before = mark.location - 1
+        if before > 0, ns.character(at: before) == 0x0A, ns.character(at: before - 1) == 0x0D { before -= 1 }
+        return before
+    }
+
+    // MARK: Paragraphs
+
+    /// A hidden paragraph break, and where the paragraph after it starts.
+    private struct ParagraphBreak {
+        let range: NSRange
+        let nextParagraph: Int
+    }
+
+    private var paragraphBreaks: [ParagraphBreak] {
+        guard viewMode == .formatted else { return [] }
+        let ns = string as NSString
+        return styler.map.paragraphBreaks.compactMap { range in
+            guard NSMaxRange(range) <= ns.length else { return nil }
+            let blank = ns.lineRange(for: NSRange(location: NSMaxRange(range), length: 0))
+            return ParagraphBreak(range: range, nextParagraph: NSMaxRange(blank))
+        }
+    }
+
+    /// The caret never rests on a hidden break or the blank line after it: both are drawn at the
+    /// end of the paragraph. A step right from that end goes to the next paragraph.
+    private func caretOutsideParagraphBreaks(_ location: Int) -> Int {
+        guard let item = paragraphBreaks.first(where: { location > $0.range.location && location < $0.nextParagraph }) else { return location }
+        let isSteppingRight = selectedRange().location == item.range.location
+        // Ending a paragraph inside a table's hidden source would hide the caret.
+        let endIsInTable = styler.map.tables.contains { item.range.location >= $0.range.location && item.range.location <= NSMaxRange($0.range) }
+        return isSteppingRight || endIsInTable ? item.nextParagraph : item.range.location
+    }
+
+    /// Return starts a new paragraph in the formatted view, except where lines matter on their own.
+    private var startsParagraphOnReturn: Bool {
+        guard viewMode == .formatted else { return false }
+        let ns = string as NSString
+        let location = selectedRange().location
+        let line = ns.lineRange(for: NSRange(location: location, length: 0))
+        let isBlank = ns.substring(with: line).allSatisfy(\.isNewline)
+        let inCode = styler.map.codeBlocks.contains { NSLocationInRange(location, $0.range) || location == NSMaxRange($0.range) }
+        let inList = styler.map.spans.contains { $0.kind == .listItem && NSLocationInRange($0.range.location, line) }
+        return !isBlank && !inCode && !inList
+    }
+
+    /// Shift-Return: a line break inside the paragraph.
+    override func insertLineBreak(_ sender: Any?) {
+        insertText(lineEnding, replacementRange: selectedRange())
+    }
+
+    override func deleteForward(_ sender: Any?) {
+        let selection = selectedRange()
+        if selection.length == 0, let item = paragraphBreaks.first(where: { $0.range.location == selection.location }) {
+            applyEdit(NSRange(location: item.range.location, length: item.nextParagraph - item.range.location), "")
+            setSelectedRange(NSRange(location: item.range.location, length: 0))
+            return
+        }
+        super.deleteForward(sender)
+    }
+
     /// Where the caret goes instead of landing inside a table's hidden source.
     private func caretOutsideTables(_ location: Int) -> Int {
         guard viewMode == .formatted,
@@ -265,17 +340,23 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     override func didChangeText() {
         super.didChangeText()
         typingAttributes = styler.typingAttributes
+        refreshDisplay()
         onTextChange?(string)
     }
 
     override func setSelectedRanges(_ ranges: [NSValue], affinity: NSSelectionAffinity, stillSelecting: Bool) {
         var ranges = ranges
         if ranges.count == 1, ranges[0].rangeValue.length == 0, textStorage != nil {
-            ranges = [NSValue(range: NSRange(location: caretOutsideTables(ranges[0].rangeValue.location), length: 0))]
+            let location = caretOutsideHeadingMarks(caretOutsideParagraphBreaks(caretOutsideTables(ranges[0].rangeValue.location)))
+            ranges = [NSValue(range: NSRange(location: location, length: 0))]
         }
         super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelecting)
         isFreshlyLoaded = false
-        if textStorage != nil, layoutManager != nil { refreshDisplay() }
+        if textStorage != nil, layoutManager != nil {
+            refreshDisplay()
+            // Revealing syntax can move the text after the caret was placed.
+            if window != nil, !stillSelecting, selectedRange().length == 0 { updateInsertionPointStateAndRestartTimer(true) }
+        }
     }
 
     override func setFrameSize(_ newSize: NSSize) {
@@ -302,6 +383,61 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         }
         return nil
     }
+
+    /// Backspace at the start of a heading removes its hidden mark, making it plain text.
+    override func deleteBackward(_ sender: Any?) {
+        let selection = selectedRange()
+        // At the start of a paragraph, joins it to the one before.
+        if selection.length == 0, let item = paragraphBreaks.first(where: { $0.nextParagraph == selection.location }) {
+            applyEdit(NSRange(location: item.range.location, length: item.nextParagraph - item.range.location), "")
+            setSelectedRange(NSRange(location: item.range.location, length: 0))
+            return
+        }
+        guard selection.length == 0, let mark = hiddenHeadingMarks.first(where: { NSMaxRange($0) == selection.location }) else {
+            super.deleteBackward(sender)
+            return
+        }
+        applyEdit(mark, "")
+        setSelectedRange(NSRange(location: mark.location, length: 0))
+    }
+
+    /// Return at the end of an opening fence with no closing one adds the closing fence below.
+    override func insertNewline(_ sender: Any?) {
+        guard let fence = fenceToClose() else {
+            if startsParagraphOnReturn {
+                insertText(lineEnding + lineEnding, replacementRange: selectedRange())
+            } else {
+                super.insertNewline(sender)
+            }
+            return
+        }
+        let selection = selectedRange()
+        let newline = lineEnding
+        insertText(newline + newline + fence, replacementRange: selection)
+        setSelectedRange(NSRange(location: selection.location + (newline as NSString).length, length: 0))
+    }
+
+    /// The fence to add when the caret ends an opening fence line of a block left open.
+    private func fenceToClose() -> String? {
+        let selection = selectedRange()
+        guard selection.length == 0 else { return nil }
+        let ns = string as NSString
+        let line = ns.lineRange(for: selection)
+        var contentEnd = NSMaxRange(line)
+        while contentEnd > line.location, [0x0A, 0x0D].contains(ns.character(at: contentEnd - 1)) { contentEnd -= 1 }
+        guard selection.location == contentEnd,
+              let block = styler.map.codeBlocks.first(where: { $0.range.location >= line.location && $0.range.location < contentEnd }),
+              !block.isClosed
+        else { return nil }
+        let text = ns.substring(with: NSRange(location: line.location, length: contentEnd - line.location))
+        let indent = text.prefix { $0 == " " }
+        let rest = text.dropFirst(indent.count)
+        guard let mark = rest.first, mark == "`" || mark == "~" else { return nil }
+        return String(indent) + String(rest.prefix { $0 == mark })
+    }
+
+    /// The line ending the document already uses.
+    private var lineEnding: String { string.contains("\r\n") ? "\r\n" : "\n" }
 
     override func insertText(_ text: Any, replacementRange: NSRange) {
         let target = replacementRange.location == NSNotFound ? selectedRange() : replacementRange

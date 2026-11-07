@@ -7,6 +7,7 @@ struct EditorDecorations: Equatable {
     var chips: [NSRange] = []
     var underlines: [NSRange] = []
     var strikes: [NSRange] = []
+    var paragraphBreaks: [NSRange] = []
 }
 
 /// Draws the document with some characters hidden or swapped, without changing the text.
@@ -17,7 +18,14 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     /// Tables drawn over hidden source, as the source range and the height to reserve.
     private(set) var reservedTables: [(range: NSRange, height: CGFloat)] = []
     private var tableOffsets: [Int: CGFloat] = [:]
+    /// Clears the code background, which reaches past the block's last line.
+    private static let spaceBelowCode: CGFloat = 10
+    /// The space after a paragraph, shown in place of the hidden blank line that ends it.
+    var paragraphGap: CGFloat = 0
+    /// The font of a line with no text in it yet.
+    var emptyLineFont: NSFont?
     var codeBackground = NSColor.clear
+    var chipBackground = NSColor.clear
     var ruleColor = NSColor.clear
     var quoteBarColor = NSColor.clear
     var underlineColor = NSColor.clear
@@ -71,16 +79,64 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
                        baselineOffset: UnsafeMutablePointer<CGFloat>,
                        in textContainer: NSTextContainer,
                        forGlyphRange glyphRange: NSRange) -> Bool {
-        guard !reservedTables.isEmpty else { return false }
         let characters = characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
-        guard let table = reservedTables.first(where: { NSIntersectionRange($0.range, characters).length > 0 }) else { return false }
+        fitUsedRect(lineFragmentUsedRect, toTextIn: characters, fragment: lineFragmentRect.pointee, baseline: baselineOffset.pointee)
+        let belowCode = endsCodeBlock(characters) ? Self.spaceBelowCode : 0
+        let belowParagraph = endsParagraph(characters) ? paragraphGap : 0
+        let spaceBelow = max(belowCode, belowParagraph)
+        guard let table = reservedTables.first(where: { NSIntersectionRange($0.range, characters).length > 0 }) else {
+            lineFragmentRect.pointee.size.height += spaceBelow
+            return true
+        }
         // Hidden text at a line start joins the line before, so a table can share a fragment
         // with the text above it. The table then goes below that text.
         let textHeight = characters.location < table.range.location ? lineFragmentRect.pointee.height : 0
         tableOffsets[table.range.location] = textHeight
-        lineFragmentRect.pointee.size.height = textHeight + table.height
-        lineFragmentUsedRect.pointee.size.height = textHeight + table.height
+        // Only the full rect grows: the caret takes its height from the used rect.
+        lineFragmentRect.pointee.size.height = textHeight + table.height + spaceBelow
         return true
+    }
+
+    /// The caret takes its height from the used rect, so it covers the text and not the line
+    /// spacing around it. A line shorter than its text is left alone.
+    private func fitUsedRect(_ used: UnsafeMutablePointer<NSRect>, toTextIn characters: NSRange, fragment: NSRect, baseline: CGFloat) {
+        guard let font = tallestVisibleFont(in: characters) else { return }
+        let height = font.ascender - font.descender
+        guard height <= fragment.height else { return }
+        used.pointee.origin.y = fragment.minY + max(0, baseline - font.ascender)
+        used.pointee.size.height = height
+    }
+
+    /// A block's closing fence is hidden, so spacing set on its paragraph has no effect.
+    private func endsCodeBlock(_ characters: NSRange) -> Bool {
+        decorations.codeBlocks.contains { $0.length > 0 && NSLocationInRange(NSMaxRange($0) - 1, characters) }
+    }
+
+    private func endsParagraph(_ characters: NSRange) -> Bool {
+        decorations.paragraphBreaks.contains { NSLocationInRange($0.location, characters) }
+    }
+
+    private func tallestVisibleFont(in characters: NSRange) -> NSFont? {
+        guard let storage = textStorage, characters.length > 0 else { return nil }
+        var tallest: NSFont?
+        storage.enumerateAttribute(.font, in: characters) { value, range, _ in
+            guard let font = value as? NSFont else { return }
+            let isVisible = !hidden.contains(integersIn: range.location..<NSMaxRange(range))
+            if isVisible, font.pointSize > tallest?.pointSize ?? 0 { tallest = font }
+        }
+        return tallest ?? storage.attribute(.font, at: characters.location, effectiveRange: nil) as? NSFont
+    }
+
+    /// The empty line after a final newline never reaches the delegate.
+    override func setExtraLineFragmentRect(_ fragmentRect: NSRect, usedRect: NSRect, textContainer container: NSTextContainer) {
+        var used = usedRect
+        if let font = emptyLineFont {
+            let height = font.ascender - font.descender
+            if height <= used.height {
+                used.size.height = height
+            }
+        }
+        super.setExtraLineFragmentRect(fragmentRect, usedRect: used, textContainer: container)
     }
 
     /// How far below its line fragment's top a table starts.
@@ -99,7 +155,9 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         for i in 0..<count {
             let index = characterIndexes[i]
             if hidden.contains(index) {
-                newProperties[i] = .null
+                // Not `.null`: null glyphs at a line start join the line before, which puts the
+                // caret on the wrong line and traps the up arrow below a heading.
+                newProperties[i] = .controlCharacter
                 didChange = true
             } else if let character = substitutions[index], let glyph = glyph(for: character, in: font) {
                 newGlyphs[i] = glyph
@@ -127,9 +185,9 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     override func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: NSPoint) {
         super.drawBackground(forGlyphRange: glyphsToShow, at: origin)
         for range in decorations.codeBlocks {
-            guard let rect = fragmentsRect(of: range, showing: glyphsToShow) else { continue }
+            guard fragmentsRect(of: range, showing: glyphsToShow) != nil, let rect = codeBackgroundRect(of: range) else { continue }
             codeBackground.setFill()
-            NSBezierPath(roundedRect: rect.offsetBy(dx: origin.x, dy: origin.y).insetBy(dx: 0, dy: -6), xRadius: 7, yRadius: 7).fill()
+            NSBezierPath(roundedRect: rect.offsetBy(dx: origin.x, dy: origin.y), xRadius: 7, yRadius: 7).fill()
         }
         for range in decorations.chips {
             drawChip(range, showing: glyphsToShow, at: origin)
@@ -198,7 +256,7 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
 
     private func drawChip(_ range: NSRange, showing glyphsToShow: NSRange, at origin: NSPoint) {
         guard let glyphs = displayedGlyphs(of: range), NSIntersectionRange(glyphs, glyphsToShow).length > 0 else { return }
-        codeBackground.setFill()
+        chipBackground.setFill()
         for rect in lineRects(of: range) {
             let chip = NSRect(x: rect.minX + origin.x - 3, y: rect.maxY + origin.y - 14, width: rect.width + 6, height: 19)
             NSBezierPath(roundedRect: chip, xRadius: 4, yRadius: 4).fill()
@@ -211,6 +269,18 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     }
 
     /// The line fragments a block's displayed text is on.
+    /// Where a code block's background is drawn, before the view's origin is added.
+    func codeBackgroundRect(of range: NSRange) -> NSRect? {
+        guard let glyphs = displayedGlyphs(of: range) else { return nil }
+        var result: NSRect?
+        enumerateLineFragments(forGlyphRange: glyphs) { rect, used, _, _, _ in
+            // Stops at the text, so the space below the block stays clear.
+            let line = NSRect(x: rect.minX, y: rect.minY, width: rect.width, height: used.maxY - rect.minY)
+            result = result?.union(line) ?? line
+        }
+        return result?.insetBy(dx: 0, dy: -6)
+    }
+
     func blockRect(of range: NSRange) -> NSRect? {
         guard let glyphs = displayedGlyphs(of: range) else { return nil }
         var result: NSRect?

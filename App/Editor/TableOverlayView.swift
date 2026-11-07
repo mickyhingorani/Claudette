@@ -12,7 +12,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     private var availableWidth: CGFloat
     private(set) var columnWidths: [CGFloat] = []
     private var rowHeights: [CGFloat] = []
-    private var strings: [[NSAttributedString]] = []
+    private(set) var strings: [[NSAttributedString]] = []
     private var field: NSTextField?
     var editingField: NSTextField? { field }
     private(set) var editingCell: (row: Int, column: Int)?
@@ -106,7 +106,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
         let manager = NSFontManager.shared
         let font = isHeader ? manager.convert(cellFont, toHaveTrait: .boldFontMask) : cellFont
         let result = NSMutableAttributedString(string: text, attributes: [
-            .font: font, .foregroundColor: theme.text, .paragraphStyle: paragraph,
+            .font: font, .foregroundColor: isHeader ? theme.palette.tableHeaderText : theme.text, .paragraphStyle: paragraph,
         ])
         // A leading word keeps cell text from parsing as a heading or list.
         let prefix = 2
@@ -116,12 +116,18 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
             let range = local(span.range)
             guard NSMaxRange(range) <= result.length else { continue }
             switch span.kind {
-            case .strong: result.addAttribute(.font, value: manager.convert(font, toHaveTrait: .boldFontMask), range: range)
-            case .emphasis: result.addAttribute(.font, value: manager.convert(font, toHaveTrait: .italicFontMask), range: range)
-            case .inlineCode: result.addAttribute(.font, value: manager.convert(theme.monoFont, toSize: font.pointSize * 0.9), range: range)
+            case .strong:
+                result.addAttribute(.font, value: manager.convert(font, toHaveTrait: .boldFontMask), range: range)
+                if !isHeader { result.addAttribute(.foregroundColor, value: theme.palette.strong, range: range) }
+            case .emphasis:
+                result.addAttribute(.font, value: manager.convert(font, toHaveTrait: .italicFontMask), range: range)
+                if !isHeader { result.addAttribute(.foregroundColor, value: theme.palette.emphasis, range: range) }
+            case .inlineCode:
+                result.addAttribute(.font, value: manager.convert(theme.monoFont, toSize: font.pointSize * 0.9), range: range)
+                if !isHeader { result.addAttribute(.foregroundColor, value: theme.palette.inlineCode, range: range) }
             case .strikethrough: result.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: range)
             case .link:
-                result.addAttribute(.foregroundColor, value: theme.accent, range: range)
+                result.addAttribute(.foregroundColor, value: theme.palette.link, range: range)
                 result.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
             default: break
             }
@@ -155,7 +161,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
         let outline = NSBezierPath(roundedRect: NSRect(origin: .zero, size: size).insetBy(dx: 0.5, dy: 0.5), xRadius: 6, yRadius: 6)
         NSGraphicsContext.saveGraphicsState()
         outline.addClip()
-        theme.panel.setFill()
+        theme.palette.tableHeader.setFill()
         NSRect(x: 0, y: 0, width: size.width, height: rowHeights[0]).fill()
         theme.line.setFill()
         var y: CGFloat = 0

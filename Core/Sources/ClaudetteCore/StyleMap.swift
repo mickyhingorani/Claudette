@@ -48,12 +48,25 @@ public struct TaskBox: Equatable, Sendable {
     public var owner: NSRange
 }
 
+/// A code block. `contentRange` is the code without its fences.
+public struct CodeBlockInfo: Equatable, Sendable {
+    public var range: NSRange
+    public var contentRange: NSRange
+    public var language: String?
+    /// False when a fenced block has no closing fence, so it runs on to the end of the document.
+    public var isClosed: Bool
+}
+
 public struct StyleMap: Equatable, Sendable {
     public var spans: [StyledSpan] = []
     public var hidden: [HiddenRange] = []
     public var substitutions: [Substitution] = []
     public var taskBoxes: [TaskBox] = []
     public var tables: [TableBlock] = []
+    public var codeBlocks: [CodeBlockInfo] = []
+    /// Newlines that end a paragraph because a blank line follows. The formatted view hides
+    /// them, and the blank line after, and shows a gap in their place.
+    public var paragraphBreaks: [NSRange] = []
 
     public init() {}
 }

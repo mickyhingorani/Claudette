@@ -7,6 +7,8 @@ A simple, dark Markdown app for macOS, with minimal chrome. It's a calm place to
 - Connect any folder, such as a project folder Claude also works in. New files appear on their own.
 - Import files, or drag them onto the window. Drag a folder in to connect it.
 - Edits save automatically.
+- Five themes, each with its own colors and fonts: Ink, Slate, Nord, Solarized, and Terminal.
+- Code blocks are syntax highlighted for about 190 languages, in each theme's colors.
 
 ## Build and run
 
@@ -26,6 +28,10 @@ swift test --package-path Core
 xcodebuild -scheme Claudette -destination 'platform=macOS' -derivedDataPath build test
 ```
 
+## Credits
+
+Syntax highlighting uses [highlight.js](https://highlightjs.org), bundled under its BSD 3-Clause license.
+
 ## Shortcuts
 
 | Action | Shortcut |
@@ -36,3 +42,5 @@ xcodebuild -scheme Claudette -destination 'platform=macOS' -derivedDataPath buil
 | Show or hide file list | `⌘\` |
 | Switch view | `⌘E` |
 | Bold, italic, link | `⌘B`, `⌘I`, `⌘K` |
+| New paragraph (formatted view) | `Return` |
+| Line break inside a paragraph | `⇧Return` |
