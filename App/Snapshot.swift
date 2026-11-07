@@ -6,12 +6,14 @@ enum Snapshot {
     static func runIfRequested() {
         let defaults = UserDefaults.standard
         if let folder = defaults.string(forKey: "snapshotFolder"), let out = defaults.string(forKey: "snapshotOut") {
+            guard FileManager.default.fileExists(atPath: folder) else { exit(1) }
             MainActor.assumeIsolated { renderApp(folder: folder, out: out, defaults: defaults) }
             exit(0)
         }
         guard let file = defaults.string(forKey: "snapshotFile"),
-              let out = defaults.string(forKey: "snapshotOut"),
-              let text = try? String(contentsOfFile: file, encoding: .utf8) else { return }
+              let out = defaults.string(forKey: "snapshotOut") else { return }
+        // A snapshot request must never fall through to a normal launch.
+        guard let text = try? String(contentsOfFile: file, encoding: .utf8) else { exit(1) }
         _ = NSApplication.shared
         let (scroll, editor) = EditorTextView.makeInScrollView()
         editor.theme = Theme.named(defaults.string(forKey: "snapshotTheme") ?? "ink")
@@ -32,7 +34,7 @@ enum Snapshot {
     /// Renders the whole window, top bar and file list included.
     @MainActor private static func renderApp(folder: String, out: String, defaults: UserDefaults) {
         _ = NSApplication.shared
-        let store = UserDefaults(suiteName: UUID().uuidString) ?? .standard
+        let store = AppModel.scratchDefaults()
         store.set([folder], forKey: "folders")
         store.set(defaults.string(forKey: "snapshotTheme") ?? "ink", forKey: "theme")
         store.set(defaults.string(forKey: "snapshotMode") ?? "formatted", forKey: "viewMode")

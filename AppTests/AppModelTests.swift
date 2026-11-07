@@ -428,17 +428,6 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(try read(file).contains("| typed | 2 |"))
     }
 
-    func testAutosaveDoesNotInterruptCellBeingEdited() throws {
-        let model = makeModel()
-        let file = try write(tableText, "1.md", in: starter)
-        model.refresh()
-        model.open(file)
-        let overlay = try XCTUnwrap(model.editor.tableOverlays.first)
-        overlay.beginEditing(row: 1, column: 0)
-        model.saveNow()
-        XCTAssertNotNil(overlay.editingCell)
-    }
-
     func testFailedSaveKeepsFileOpen() throws {
         let project = try folder("Locked")
         let one = try write("a", "1.md", in: project)

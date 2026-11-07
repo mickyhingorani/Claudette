@@ -18,8 +18,11 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         get { styler.mode }
         set {
             guard newValue != styler.mode else { return }
+            commitCellEdits()
             styler.mode = newValue
             restyle()
+            let selection = selectedRange()
+            if newValue == .formatted, selection.length == 0 { setSelectedRange(selection) }
         }
     }
 
@@ -92,9 +95,50 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
 
     override var undoManager: UndoManager? { documentUndo }
 
+    // The window answers undo: with its own manager unless the text view does first.
+
+    private var openCell: TableOverlayView? { tableOverlays.first { $0.editingCell != nil } }
+
+    /// An open cell has its own field, with the window's undo history.
+    private var activeUndo: UndoManager? { openCell != nil ? window?.undoManager : documentUndo }
+
+    @objc func undo(_ sender: Any?) {
+        activeUndo?.undo()
+        if openCell == nil { onTextChange?(string) }
+    }
+
+    @objc func redo(_ sender: Any?) {
+        activeUndo?.redo()
+        if openCell == nil { onTextChange?(string) }
+    }
+
+    override func validateMenuItem(_ item: NSMenuItem) -> Bool {
+        switch item.action {
+        case #selector(undo(_:)):
+            item.title = activeUndo?.undoMenuItemTitle ?? "Undo"
+            return activeUndo?.canUndo ?? false
+        case #selector(redo(_:)):
+            item.title = activeUndo?.redoMenuItemTitle ?? "Redo"
+            return activeUndo?.canRedo ?? false
+        default:
+            return super.validateMenuItem(item)
+        }
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard window != nil else { return }
+        // After the current update, so this holds once the window has finished setting up.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let window = self.window, window.firstResponder === window else { return }
+            window.makeFirstResponder(self)
+        }
+    }
+
     /// Replaces the document. Not an edit: undo history is cleared.
     func load(text: String) {
         guard let storage = textStorage else { return }
+        tableOverlays.forEach { $0.discardEditing() }
         documentUndo.disableUndoRegistration()
         storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: text)
         documentUndo.enableUndoRegistration()
@@ -144,7 +188,9 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     private func syncTables(invalidate: Bool) {
         let tables = viewMode == .formatted ? styler.map.tables : []
         while tableOverlays.count > tables.count {
-            tableOverlays.removeLast().removeFromSuperview()
+            let overlay = tableOverlays.removeLast()
+            overlay.discardEditing()
+            overlay.removeFromSuperview()
         }
         for (index, table) in tables.enumerated() {
             if index < tableOverlays.count {
@@ -152,6 +198,10 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
             } else {
                 let overlay = TableOverlayView(table: table, theme: theme, width: tableWidth)
                 overlay.onEdits = { [weak self] edits in self?.applyEdits(edits) }
+                overlay.onDraftChange = { [weak self] in
+                    guard let self else { return }
+                    self.onTextChange?(self.string)
+                }
                 overlay.onFinishEditing = { [weak self] in
                     guard let self else { return }
                     self.window?.makeFirstResponder(self)
@@ -166,6 +216,17 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
 
     func commitCellEdits() {
         tableOverlays.forEach { $0.commitCurrentEdit() }
+    }
+
+    /// The document as it will be once any open cell is committed, for saving while it's open.
+    var textWithCellDrafts: String {
+        let edits = tableOverlays.flatMap(\.draftEdits)
+        guard !edits.isEmpty else { return string }
+        let text = NSMutableString(string: string)
+        for edit in edits.sorted(by: { $0.range.location > $1.range.location }) {
+            text.replaceCharacters(in: edit.range, with: edit.replacement)
+        }
+        return text as String
     }
 
     func positionTableOverlays() {
@@ -227,6 +288,30 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     }
 
     // MARK: Editing commands
+
+    /// A line typed right under a table would join it as a row, so it needs a blank line first.
+    private func paragraphBreak(beforeTypingAt location: Int) -> String? {
+        guard viewMode == .formatted else { return nil }
+        let ns = string as NSString
+        for table in styler.map.tables {
+            let end = NSMaxRange(table.range)
+            if location == end, end == ns.length { return table.lineEnding + table.lineEnding }
+            if end < ns.length, location == NSMaxRange(ns.lineRange(for: NSRange(location: end, length: 0))) {
+                return table.lineEnding
+            }
+        }
+        return nil
+    }
+
+    override func insertText(_ text: Any, replacementRange: NSRange) {
+        let target = replacementRange.location == NSNotFound ? selectedRange() : replacementRange
+        let typed = (text as? String) ?? (text as? NSAttributedString)?.string ?? ""
+        if target.length == 0, !typed.isEmpty, !typed.allSatisfy(\.isNewline), let lead = paragraphBreak(beforeTypingAt: target.location) {
+            super.insertText(lead + typed, replacementRange: target)
+        } else {
+            super.insertText(text, replacementRange: replacementRange)
+        }
+    }
 
     @discardableResult
     func applyEdit(_ range: NSRange, _ replacement: String) -> Bool {

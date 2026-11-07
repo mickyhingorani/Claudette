@@ -19,6 +19,8 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
 
     var onEdits: (([TextEdit]) -> Void)?
     var onFinishEditing: (() -> Void)?
+    /// Called when the text of an open cell changes, so it can be saved while still open.
+    var onDraftChange: (() -> Void)?
 
     override var isFlipped: Bool { true }
     var gridSize: NSSize { NSSize(width: columnWidths.reduce(0, +), height: rowHeights.reduce(0, +)) }
@@ -183,7 +185,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     override func mouseDown(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
         guard let target = cell(at: point) else { return }
-        if editingCell != nil, let text = field?.stringValue { commitEditing(text: text) }
+        commitCurrentEdit()
         beginEditing(row: target.row, column: target.column)
     }
 
@@ -219,8 +221,30 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
         let old = field
         field = nil
         editingCell = nil
+        // Delegate first: ending the field must not commit into text that may have changed.
         old?.delegate = nil
+        old?.abortEditing()
         old?.removeFromSuperview()
+    }
+
+    private var fieldText: String? {
+        (field?.currentEditor() as? NSTextView)?.string ?? field?.stringValue
+    }
+
+    /// Closes the cell without applying its text, for when the document underneath is replaced.
+    func discardEditing() {
+        endField()
+    }
+
+    /// The edits the open cell would make if it were committed now.
+    var draftEdits: [TextEdit] {
+        guard let editing = editingCell, let text = fieldText,
+              editing.row < table.rowCount, editing.column < table.columnCount else { return [] }
+        return TableEditor.setCell(table, row: editing.row, column: editing.column, text: text)
+    }
+
+    func controlTextDidChange(_ notification: Notification) {
+        onDraftChange?()
     }
 
     func commitEditing(text: String) {
@@ -232,7 +256,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     }
 
     func commitCurrentEdit() {
-        if let text = field?.stringValue { commitEditing(text: text) }
+        if let text = fieldText { commitEditing(text: text) }
     }
 
     func moveToNextCell(committing text: String) {
@@ -270,6 +294,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
             onFinishEditing?()
         case #selector(NSResponder.cancelOperation(_:)):
             endField()
+            onDraftChange?()
             onFinishEditing?()
         default:
             return false
@@ -278,12 +303,14 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     }
 
     func controlTextDidEndEditing(_ notification: Notification) {
-        if let text = field?.stringValue { commitEditing(text: text) }
+        commitCurrentEdit()
     }
 
     // MARK: Menu
 
     override func menu(for event: NSEvent) -> NSMenu? {
+        // An open cell's position would go stale if a row or column changes under it.
+        commitCurrentEdit()
         guard let target = cell(at: convert(event.locationInWindow, from: nil)) else { return nil }
         let menu = NSMenu()
         func add(_ title: String, enabled: Bool = true, edits: @escaping () -> [TextEdit]) {

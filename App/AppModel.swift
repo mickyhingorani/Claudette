@@ -19,6 +19,11 @@ final class AppModel: ObservableObject {
     }
 
     private static let autosaveDelay: TimeInterval = 1
+    private static let saveFailedNotice = "Couldn't save. Your text is still here."
+    private static let readOnlyNotice = "Read-only: this file isn't UTF-8 text"
+
+    /// The model behind the running app, for the app delegate.
+    private(set) static weak var current: AppModel?
 
     @Published private(set) var folders: [URL] = []
     @Published private(set) var sections: [FolderSection] = []
@@ -85,14 +90,24 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// One reused, emptied store for tests and snapshots, so they never touch real settings.
+    static func scratchDefaults() -> UserDefaults {
+        let name = "com.mickyhingorani.Claudette.scratch"
+        let store = UserDefaults(suiteName: name) ?? .standard
+        store.removePersistentDomain(forName: name)
+        return store
+    }
+
     static func live() -> AppModel {
         let isTesting = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
         if isTesting {
             let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-            return AppModel(defaults: UserDefaults(suiteName: UUID().uuidString) ?? .standard, starterFolder: folder, watchesFolders: false)
+            return AppModel(defaults: scratchDefaults(), starterFolder: folder, watchesFolders: false)
         }
         let starter = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Claudette", isDirectory: true)
-        return AppModel(defaults: .standard, starterFolder: starter, watchesFolders: true)
+        let model = AppModel(defaults: .standard, starterFolder: starter, watchesFolders: true)
+        current = model
+        return model
     }
 
     // MARK: Folders
@@ -188,6 +203,7 @@ final class AppModel: ObservableObject {
         document.acceptDisk()
         let selection = editor.selectedRange()
         editor.load(text: document.text)
+        applyEditability(of: document)
         let length = (document.text as NSString).length
         editor.setSelectedRange(NSRange(location: min(selection.location, length), length: 0))
     }
@@ -205,13 +221,18 @@ final class AppModel: ObservableObject {
             currentFile = url
             isDirty = false
             editor.load(text: file.text)
-            editor.isEditable = !file.isReadOnly
-            notice = file.isReadOnly ? "Read-only: this file isn't UTF-8 text" : nil
+            applyEditability(of: file)
             unseen.remove(url)
             defaults.set(url.path, forKey: Key.lastFile)
+            editor.window?.makeFirstResponder(editor)
         } catch {
             notice = "Couldn't open \(url.lastPathComponent)"
         }
+    }
+
+    private func applyEditability(of file: DocumentFile) {
+        editor.isEditable = !file.isReadOnly
+        notice = file.isReadOnly ? Self.readOnlyNotice : nil
     }
 
     func newFile() {
@@ -253,6 +274,12 @@ final class AppModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.autosaveDelay, execute: work)
     }
 
+    /// Saves, and asks before quitting only if some text still couldn't be saved.
+    func shouldQuit(confirm: () -> Bool) -> Bool {
+        flush()
+        return !isDirty || confirm()
+    }
+
     /// Saves everything, including a table cell still being typed in.
     func flush() {
         editor.commitCellEdits()
@@ -262,17 +289,19 @@ final class AppModel: ObservableObject {
     func saveNow() {
         autosave?.cancel()
         guard isDirty else { return }
-        let text = editor.string
+        let text = editor.textWithCellDrafts
         do {
             if let document {
                 try saveExisting(document, text: text)
             } else {
                 try saveDraft(text: text)
             }
+            if notice == Self.saveFailedNotice { notice = nil }
         } catch DocumentFile.SaveError.readOnly {
             isDirty = false
+            notice = Self.readOnlyNotice
         } catch {
-            notice = "Couldn't save. Your text is still here."
+            notice = Self.saveFailedNotice
         }
     }
 
@@ -292,8 +321,12 @@ final class AppModel: ObservableObject {
     }
 
     private func saveDraft(text: String) throws {
-        guard let folder = draftFolder ?? folders.first,
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            // A blank new file has nothing worth keeping.
+            isDirty = false
+            return
+        }
+        guard let folder = draftFolder ?? folders.first else { return }
         let url = FileNaming.uniqueURL(for: FileNaming.name(fromFirstLineOf: text), in: folder)
         try Data(text.utf8).write(to: url, options: .atomic)
         document = try DocumentFile(url: url)
@@ -386,10 +419,7 @@ final class AppModel: ObservableObject {
 
     func trash(_ url: URL) {
         let isCurrent = currentFile == url
-        if isCurrent {
-            autosave?.cancel()
-            isDirty = false
-        }
+        if isCurrent { autosave?.cancel() }
         do {
             try FileManager.default.trashItem(at: url, resultingItemURL: nil)
             knownFiles.remove(url)
@@ -401,6 +431,7 @@ final class AppModel: ObservableObject {
             }
         } catch {
             notice = "Couldn't move \(url.lastPathComponent) to the Trash"
+            if isCurrent, isDirty { textDidChange() }
         }
     }
 }
