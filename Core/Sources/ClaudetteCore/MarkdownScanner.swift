@@ -263,7 +263,11 @@ private struct Walker: MarkupWalker {
         }
     }
 
-    mutating func visitTable(_ table: Markdown.Table) {}
+    mutating func visitTable(_ table: Markdown.Table) {
+        guard let range = nsRange(table), let block = TableBlock.parse(ns, range: range) else { return }
+        map.tables.append(block)
+        map.spans.append(StyledSpan(range: block.delimiterLine, kind: .syntax))
+    }
 }
 
 private extension StyleMap {
@@ -282,11 +286,7 @@ private extension StyleMap {
         map.hidden = hidden.map { HiddenRange(range: shift($0.range), owner: shift($0.owner), kind: $0.kind) }
         map.substitutions = substitutions.map { Substitution(range: shift($0.range), glyph: $0.glyph, owner: shift($0.owner)) }
         map.taskBoxes = taskBoxes.map { TaskBox(range: shift($0.range), isChecked: $0.isChecked, owner: shift($0.owner)) }
-        map.tables = tables.map { table in
-            func shiftCell(_ cell: TableCell) -> TableCell { TableCell(textRange: shift(cell.textRange), text: cell.text) }
-            return TableBlock(range: shift(table.range), header: table.header.map(shiftCell),
-                              rows: table.rows.map { $0.map(shiftCell) }, alignments: table.alignments)
-        }
+        map.tables = tables.map { $0.shifted(by: base) }
         return map
     }
 }
