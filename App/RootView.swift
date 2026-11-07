@@ -8,6 +8,7 @@ struct EditorHost: NSViewRepresentable {
 
 struct RootView: View {
     @ObservedObject var model: AppModel
+    @State private var widthAtDragStart: CGFloat?
 
     private var theme: Theme { model.theme }
 
@@ -17,7 +18,8 @@ struct RootView: View {
             HStack(spacing: 0) {
                 if model.isFileListOpen {
                     FileListView(model: model)
-                        .frame(width: 250)
+                        .frame(width: model.fileListWidth)
+                        .overlay(alignment: .trailing) { resizeHandle }
                         .transition(.move(edge: .leading))
                 }
                 content
@@ -40,6 +42,25 @@ struct RootView: View {
         }
     }
 
+    /// A thin strip on the tray's edge that drags to resize it.
+    private var resizeHandle: some View {
+        Color.clear
+            .frame(width: 7)
+            .contentShape(Rectangle())
+            .onHover { isOver in
+                if isOver { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+            }
+            .gesture(
+                DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                    .onChanged { drag in
+                        let start = widthAtDragStart ?? model.fileListWidth
+                        widthAtDragStart = start
+                        model.fileListWidth = start + drag.translation.width
+                    }
+                    .onEnded { _ in widthAtDragStart = nil }
+            )
+    }
+
     @ViewBuilder private var content: some View {
         if model.folders.isEmpty {
             VStack(spacing: 12) {
@@ -55,7 +76,7 @@ struct RootView: View {
 
     private var topBar: some View {
         HStack(spacing: 8) {
-            barButton(symbol: "line.3.horizontal", label: "Files", isOn: model.isFileListOpen) {
+            barButton(symbol: "sidebar.left", label: "Files", isOn: model.isFileListOpen) {
                 model.isFileListOpen.toggle()
             }
             if let notice = model.notice {

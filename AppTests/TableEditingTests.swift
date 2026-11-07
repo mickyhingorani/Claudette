@@ -48,6 +48,24 @@ final class TableEditingTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(layout.lineFragmentRect(forGlyphAt: after, effectiveRange: nil).minY + editor.textContainerOrigin.y, overlay.frame.maxY)
     }
 
+    func testTableUsesThemeColors() throws {
+        let editor = makeEditor("| A |\n|---|\n| **b** |\n")
+        editor.theme = .nord
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        let palette = Theme.nord.palette
+        XCTAssertEqual(overlay.strings[0][0].attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor, palette.tableHeaderText)
+        XCTAssertEqual(overlay.strings[1][0].attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor, palette.strong)
+    }
+
+    func testCaretOnLineAboveTableIsNotTableHeight() {
+        let editor = makeEditor("Here\n| A |\n|---|\n| 1 |\n| 2 |\n| 3 |\n\nAfter\n")
+        editor.setSelectedRange(NSRange(location: 2, length: 0))
+        let layout = editor.hidingLayoutManager
+        var range = NSRange()
+        let used = layout.lineFragmentUsedRect(forGlyphAt: 2, effectiveRange: &range)
+        XCTAssertLessThan(used.height, 40)
+    }
+
     func testNarrowWidthWrapsCellsTaller() throws {
         let long = "| A |\n|---|\n| " + String(repeating: "word ", count: 60) + "|\n"
         let wide = try XCTUnwrap(makeEditor(long, width: 1000).tableOverlays.first).frame.height
@@ -59,14 +77,16 @@ final class TableEditingTests: XCTestCase {
         let editor = makeEditor(text)
         editor.setSelectedRange(NSRange(location: 6, length: 0))
         editor.setSelectedRange(NSRange(location: tableStart + 3, length: 0))
-        XCTAssertEqual(editor.selectedRange().location, tableEnd + 1)
+        // Past the table and the hidden blank line after it, to the next paragraph.
+        XCTAssertEqual(editor.selectedRange().location, (text as NSString).range(of: "After").location)
     }
 
     func testCursorSkipsBackwardOverTable() {
         let editor = makeEditor(text)
         editor.setSelectedRange(NSRange(location: tableEnd + 1, length: 0))
         editor.setSelectedRange(NSRange(location: tableStart + 3, length: 0))
-        XCTAssertEqual(editor.selectedRange().location, tableStart - 1)
+        // Past the table and the hidden blank line before it, to the end of the paragraph above.
+        XCTAssertEqual(editor.selectedRange().location, tableStart - 2)
     }
 
     func testCellEditChangesOnlyThatCell() throws {

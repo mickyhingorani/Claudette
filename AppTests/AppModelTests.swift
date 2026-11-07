@@ -447,4 +447,17 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(model.editor.string, "ab")
         XCTAssertNotNil(model.notice)
     }
+
+    func testFileListWidthStaysInBounds() {
+        let model = makeModel()
+        model.fileListWidth = 20
+        XCTAssertEqual(model.fileListWidth, AppModel.fileListWidths.lowerBound)
+        model.fileListWidth = 5000
+        XCTAssertEqual(model.fileListWidth, AppModel.fileListWidths.upperBound)
+    }
+
+    func testFileListWidthRestoredOnRelaunch() {
+        makeModel().fileListWidth = 300
+        XCTAssertEqual(makeModel().fileListWidth, 300)
+    }
 }

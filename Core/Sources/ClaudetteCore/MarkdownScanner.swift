@@ -21,7 +21,35 @@ public enum MarkdownScanner {
         }
         var walker = Walker(ns: ns, lines: LineIndex(source), map: map)
         walker.visit(Document(parsing: parseText))
+        walker.map.paragraphBreaks = paragraphBreaks(in: ns, map: walker.map)
         return walker.map.sorted().shifted(by: base)
+    }
+
+    /// The newline ending each line of text that's followed by a blank line, outside code and frontmatter.
+    private static func paragraphBreaks(in ns: NSString, map: StyleMap) -> [NSRange] {
+        let verbatim = map.spans.filter {
+            if case .codeBlock = $0.kind { return true }
+            return $0.kind == .frontmatter
+        }.map(\.range)
+        func isVerbatim(_ location: Int) -> Bool { verbatim.contains { NSLocationInRange(location, $0) } }
+        func isBlank(_ line: NSRange) -> Bool {
+            (0..<line.length).allSatisfy { [0x0A, 0x0D].contains(ns.character(at: line.location + $0)) }
+        }
+        var breaks: [NSRange] = []
+        var previous: NSRange?
+        var location = 0
+        while location < ns.length {
+            let line = ns.lineRange(for: NSRange(location: location, length: 0))
+            if isBlank(line), let previous, !isBlank(previous), !isVerbatim(line.location) {
+                let end = NSMaxRange(previous)
+                var start = end - 1
+                if start > previous.location, ns.character(at: start) == 0x0A, ns.character(at: start - 1) == 0x0D { start -= 1 }
+                breaks.append(NSRange(location: start, length: end - start))
+            }
+            previous = line
+            location = NSMaxRange(line)
+        }
+        return breaks
     }
 
     private static func frontmatterLines(in ns: NSString) -> (range: NSRange, lineCount: Int, endOfLastLine: Int)? {
@@ -115,8 +143,9 @@ private struct Walker: MarkupWalker {
         if let range = nsRange(heading) {
             map.spans.append(StyledSpan(range: range, kind: .heading(level: heading.level)))
             let hashes = run(of: "#", at: range.location)
-            if hashes > 0 {
-                let spaces = run(of: " ", at: range.location + hashes)
+            let spaces = run(of: " ", at: range.location + hashes)
+            // A lone # stays visible until a space makes it a heading in the writer's eyes.
+            if hashes > 0, spaces > 0 {
                 let length = min(hashes + spaces, range.length)
                 hide(NSRange(location: range.location, length: length), owner: range, kind: .headingMark)
             }
@@ -167,22 +196,33 @@ private struct Walker: MarkupWalker {
     mutating func visitCodeBlock(_ codeBlock: CodeBlock) {
         guard let range = nsRange(codeBlock) else { return }
         map.spans.append(StyledSpan(range: range, kind: .codeBlock))
+        let (content, isClosed) = hideFences(of: range)
+        map.codeBlocks.append(CodeBlockInfo(range: range, contentRange: content, language: codeBlock.language, isClosed: isClosed))
+    }
+
+    /// Hides a block's fence lines and returns the range of the code between them.
+    /// A block with no closing fence keeps its opening fence visible, to show it's still open.
+    private mutating func hideFences(of range: NSRange) -> (content: NSRange, isClosed: Bool) {
         let firstLine = ns.lineRange(for: NSRange(location: range.location, length: 0))
-        guard let fence = fenceCharacter(onLine: firstLine) else { return }
+        guard let fence = fenceCharacter(onLine: firstLine) else { return (range, true) }
         let open = NSRange(location: range.location, length: min(NSMaxRange(firstLine), NSMaxRange(range)) - range.location)
-        hide(open, owner: range, kind: .fenceLine)
+        let contentStart = NSMaxRange(open)
 
         let lastLine = ns.lineRange(for: NSRange(location: NSMaxRange(range) - 1, length: 0))
-        guard lastLine.location >= NSMaxRange(firstLine), fenceCharacter(onLine: lastLine) == fence else { return }
+        guard lastLine.location >= NSMaxRange(firstLine), fenceCharacter(onLine: lastLine) == fence else {
+            return (NSRange(location: contentStart, length: NSMaxRange(range) - contentStart), false)
+        }
+        hide(open, owner: range, kind: .fenceLine)
         var closeStart = lastLine.location
         // Take the newline before the fence too, so no empty line is left behind.
-        if closeStart > NSMaxRange(open) {
+        if closeStart > contentStart {
             closeStart -= 1
-            if closeStart > NSMaxRange(open), ns.character(at: closeStart) == 0x0A, ns.character(at: closeStart - 1) == 0x0D {
+            if closeStart > contentStart, ns.character(at: closeStart) == 0x0A, ns.character(at: closeStart - 1) == 0x0D {
                 closeStart -= 1
             }
         }
         hide(NSRange(location: closeStart, length: NSMaxRange(range) - closeStart), owner: range, kind: .fenceLine)
+        return (NSRange(location: contentStart, length: closeStart - contentStart), true)
     }
 
     private func fenceCharacter(onLine line: NSRange) -> Character? {
@@ -297,6 +337,10 @@ private extension StyleMap {
         map.substitutions = substitutions.map { Substitution(range: shift($0.range), glyph: $0.glyph, owner: shift($0.owner)) }
         map.taskBoxes = taskBoxes.map { TaskBox(range: shift($0.range), isChecked: $0.isChecked, owner: shift($0.owner)) }
         map.tables = tables.map { $0.shifted(by: base) }
+        map.paragraphBreaks = paragraphBreaks.map(shift)
+        map.codeBlocks = codeBlocks.map {
+            CodeBlockInfo(range: shift($0.range), contentRange: shift($0.contentRange), language: $0.language, isClosed: $0.isClosed)
+        }
         return map
     }
 }

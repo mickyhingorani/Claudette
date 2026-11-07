@@ -16,6 +16,7 @@ final class AppModel: ObservableObject {
         static let lastFile = "lastFile"
         static let viewMode = "viewMode"
         static let theme = "theme"
+        static let fileListWidth = "fileListWidth"
     }
 
     private static let autosaveDelay: TimeInterval = 1
@@ -31,6 +32,14 @@ final class AppModel: ObservableObject {
     @Published private(set) var unseen: Set<URL> = []
     @Published private(set) var notice: String?
     @Published var isFileListOpen = false
+    static let fileListWidths: ClosedRange<CGFloat> = 180...420
+    @Published var fileListWidth: CGFloat = 250 {
+        didSet {
+            let clamped = min(max(fileListWidth, Self.fileListWidths.lowerBound), Self.fileListWidths.upperBound)
+            if clamped != fileListWidth { fileListWidth = clamped }
+            defaults.set(Double(fileListWidth), forKey: Key.fileListWidth)
+        }
+    }
     @Published var viewMode = ViewMode.formatted {
         didSet {
             editor.viewMode = viewMode
@@ -62,6 +71,9 @@ final class AppModel: ObservableObject {
         (scrollView, editor) = EditorTextView.makeInScrollView()
         themeID = defaults.string(forKey: Key.theme) ?? Theme.ink.id
         viewMode = ViewMode(rawValue: defaults.string(forKey: Key.viewMode) ?? "") ?? .formatted
+        if defaults.object(forKey: Key.fileListWidth) != nil {
+            fileListWidth = CGFloat(defaults.double(forKey: Key.fileListWidth))
+        }
         editor.theme = theme
         editor.viewMode = viewMode
         editor.onTextChange = { [weak self] _ in self?.textDidChange() }
