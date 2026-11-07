@@ -1,0 +1,508 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0578BCE75C004E526F9C6B4C /* ClaudetteCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5F55AA8C306A1B9F024F24A4 /* ClaudetteCore */; };
+		0A37619B421209992759C727 /* EditorStyler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E60578DCA7915693FA7EBB1 /* EditorStyler.swift */; };
+		1FA4279C34C5C46E5627DCB1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4819C256EEBDE1176786EA4 /* Theme.swift */; };
+		24C7F9B99A96F42B97536E06 /* EditorTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818CC86FF5295B038D507C33 /* EditorTextView.swift */; };
+		32B06F452D7980FFDA905FB3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */; };
+		350B6C47BCB3047D0F44C67A /* HidingLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4097A68E275D263A6D78F5 /* HidingLayoutManager.swift */; };
+		379AE30927A3A4076AA44076 /* FolderWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD423DB075FF474B94C7621 /* FolderWatcher.swift */; };
+		415A729A4D294FA3888AB804 /* RealPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */; };
+		501683150F9D895D2FBF86DE /* TableEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */; };
+		7A79FC0F741B39CE04789344 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9715F52408350CB000B481D /* AppModel.swift */; };
+		C960C7B815F9E827E741C78E /* ClaudetteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */; };
+		D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */; };
+		D9D1ED470E53BABC4EC71936 /* EditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D9C0257768097483F1AE63 /* EditorTests.swift */; };
+		E0F36871D565C8F6F97C73F3 /* TableOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A818A1E4233A0221DE14323F /* TableOverlayView.swift */; };
+		E2B5C73FAE83CDCF10B24703 /* AppModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B7CC701012237EF000CD8E8 /* AppModelTests.swift */; };
+		E9757EC2C7B88B987A2FCEEC /* Snapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841420B921672F16E1F5D936 /* Snapshot.swift */; };
+		EC9FF80388CCF0084AA008B5 /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55A5438F65AE9739BCE3AEE1 /* FileListView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DA775CBF43DFFC61CDF08B10 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E1E9E90A14300BB36AA52330 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C3CC8B97FF745287593AD174;
+			remoteInfo = Claudette;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		1B7CC701012237EF000CD8E8 /* AppModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelTests.swift; sourceTree = "<group>"; };
+		25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableEditingTests.swift; sourceTree = "<group>"; };
+		2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealPathTests.swift; sourceTree = "<group>"; };
+		2FD423DB075FF474B94C7621 /* FolderWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderWatcher.swift; sourceTree = "<group>"; };
+		55A5438F65AE9739BCE3AEE1 /* FileListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
+		57AF89E94939D999B66B13C8 /* Claudette.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Claudette.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7E4686DDE37BF53C77F82A85 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
+		818CC86FF5295B038D507C33 /* EditorTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTextView.swift; sourceTree = "<group>"; };
+		841420B921672F16E1F5D936 /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
+		84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudetteApp.swift; sourceTree = "<group>"; };
+		872C2316D731CE800F69D51A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		96D9C0257768097483F1AE63 /* EditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTests.swift; sourceTree = "<group>"; };
+		9B4097A68E275D263A6D78F5 /* HidingLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HidingLayoutManager.swift; sourceTree = "<group>"; };
+		9E60578DCA7915693FA7EBB1 /* EditorStyler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorStyler.swift; sourceTree = "<group>"; };
+		A818A1E4233A0221DE14323F /* TableOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableOverlayView.swift; sourceTree = "<group>"; };
+		C4819C256EEBDE1176786EA4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
+		E9715F52408350CB000B481D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		EE74859EBF33BCD9B7C83F9B /* ClaudetteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudetteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		87CCD4DCD45938A047BB417E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0578BCE75C004E526F9C6B4C /* ClaudetteCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5456837F1D6109EF010D23F8 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				7E4686DDE37BF53C77F82A85 /* Core */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		5904EE4DA341E51020FB6384 = {
+			isa = PBXGroup;
+			children = (
+				A08B3E6375956C30BC810D5C /* App */,
+				9234E8E70C6E75F639264536 /* AppTests */,
+				5456837F1D6109EF010D23F8 /* Packages */,
+				B71D856B0D13B4BF582BF208 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9234E8E70C6E75F639264536 /* AppTests */ = {
+			isa = PBXGroup;
+			children = (
+				1B7CC701012237EF000CD8E8 /* AppModelTests.swift */,
+				96D9C0257768097483F1AE63 /* EditorTests.swift */,
+				2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */,
+				D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */,
+				25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */,
+			);
+			path = AppTests;
+			sourceTree = "<group>";
+		};
+		A08B3E6375956C30BC810D5C /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E9715F52408350CB000B481D /* AppModel.swift */,
+				84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */,
+				55A5438F65AE9739BCE3AEE1 /* FileListView.swift */,
+				2FD423DB075FF474B94C7621 /* FolderWatcher.swift */,
+				872C2316D731CE800F69D51A /* Info.plist */,
+				18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */,
+				841420B921672F16E1F5D936 /* Snapshot.swift */,
+				C4819C256EEBDE1176786EA4 /* Theme.swift */,
+				ED887FE18AD9F24BBF7DF214 /* Editor */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		B71D856B0D13B4BF582BF208 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				57AF89E94939D999B66B13C8 /* Claudette.app */,
+				EE74859EBF33BCD9B7C83F9B /* ClaudetteTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		ED887FE18AD9F24BBF7DF214 /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				9E60578DCA7915693FA7EBB1 /* EditorStyler.swift */,
+				818CC86FF5295B038D507C33 /* EditorTextView.swift */,
+				9B4097A68E275D263A6D78F5 /* HidingLayoutManager.swift */,
+				A818A1E4233A0221DE14323F /* TableOverlayView.swift */,
+			);
+			path = Editor;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		058C49E67E4F3D79D629359F /* ClaudetteTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4931737D1A2608C4C1BB861E /* Build configuration list for PBXNativeTarget "ClaudetteTests" */;
+			buildPhases = (
+				B3CC0708C5AA605AF62418D8 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C5204B27874CD78F5825F19B /* PBXTargetDependency */,
+			);
+			name = ClaudetteTests;
+			packageProductDependencies = (
+			);
+			productName = ClaudetteTests;
+			productReference = EE74859EBF33BCD9B7C83F9B /* ClaudetteTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C3CC8B97FF745287593AD174 /* Claudette */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1BA7271FE60D35A941D8AA84 /* Build configuration list for PBXNativeTarget "Claudette" */;
+			buildPhases = (
+				7748CEF671E5683442DF00F0 /* Sources */,
+				87CCD4DCD45938A047BB417E /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Claudette;
+			packageProductDependencies = (
+				5F55AA8C306A1B9F024F24A4 /* ClaudetteCore */,
+			);
+			productName = Claudette;
+			productReference = 57AF89E94939D999B66B13C8 /* Claudette.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E1E9E90A14300BB36AA52330 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					058C49E67E4F3D79D629359F = {
+						DevelopmentTeam = 7TWJ38WWA9;
+						ProvisioningStyle = Manual;
+					};
+					C3CC8B97FF745287593AD174 = {
+						DevelopmentTeam = 7TWJ38WWA9;
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = 22B4E76E17BB3511426FE9D6 /* Build configuration list for PBXProject "Claudette" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 5904EE4DA341E51020FB6384;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1E6EDE968FD8390F65F517FF /* XCLocalSwiftPackageReference "Core" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B71D856B0D13B4BF582BF208 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C3CC8B97FF745287593AD174 /* Claudette */,
+				058C49E67E4F3D79D629359F /* ClaudetteTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7748CEF671E5683442DF00F0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A79FC0F741B39CE04789344 /* AppModel.swift in Sources */,
+				C960C7B815F9E827E741C78E /* ClaudetteApp.swift in Sources */,
+				0A37619B421209992759C727 /* EditorStyler.swift in Sources */,
+				24C7F9B99A96F42B97536E06 /* EditorTextView.swift in Sources */,
+				EC9FF80388CCF0084AA008B5 /* FileListView.swift in Sources */,
+				379AE30927A3A4076AA44076 /* FolderWatcher.swift in Sources */,
+				350B6C47BCB3047D0F44C67A /* HidingLayoutManager.swift in Sources */,
+				32B06F452D7980FFDA905FB3 /* RootView.swift in Sources */,
+				E9757EC2C7B88B987A2FCEEC /* Snapshot.swift in Sources */,
+				E0F36871D565C8F6F97C73F3 /* TableOverlayView.swift in Sources */,
+				1FA4279C34C5C46E5627DCB1 /* Theme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B3CC0708C5AA605AF62418D8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2B5C73FAE83CDCF10B24703 /* AppModelTests.swift in Sources */,
+				D9D1ED470E53BABC4EC71936 /* EditorTests.swift in Sources */,
+				415A729A4D294FA3888AB804 /* RealPathTests.swift in Sources */,
+				D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */,
+				501683150F9D895D2FBF86DE /* TableEditingTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C5204B27874CD78F5825F19B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C3CC8B97FF745287593AD174 /* Claudette */;
+			targetProxy = DA775CBF43DFFC61CDF08B10 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0A45D04A59DAE4B23B4C81AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mickyhingorani.Claudette;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2071DBE2182F42ECEBE1C433 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 7TWJ38WWA9;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		455CB058ABC8B6E84BD8108B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mickyhingorani.Claudette;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		4FF8C9074283647EB67FFB55 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mickyhingorani.ClaudetteTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Claudette.app/Contents/MacOS/Claudette";
+			};
+			name = Release;
+		};
+		7D589703A33697F71AA0DCD5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 7TWJ38WWA9;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		C25A25D3DADE220CAB290B12 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mickyhingorani.ClaudetteTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Claudette.app/Contents/MacOS/Claudette";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1BA7271FE60D35A941D8AA84 /* Build configuration list for PBXNativeTarget "Claudette" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				455CB058ABC8B6E84BD8108B /* Debug */,
+				0A45D04A59DAE4B23B4C81AE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		22B4E76E17BB3511426FE9D6 /* Build configuration list for PBXProject "Claudette" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2071DBE2182F42ECEBE1C433 /* Debug */,
+				7D589703A33697F71AA0DCD5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4931737D1A2608C4C1BB861E /* Build configuration list for PBXNativeTarget "ClaudetteTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C25A25D3DADE220CAB290B12 /* Debug */,
+				4FF8C9074283647EB67FFB55 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		1E6EDE968FD8390F65F517FF /* XCLocalSwiftPackageReference "Core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Core;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5F55AA8C306A1B9F024F24A4 /* ClaudetteCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ClaudetteCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = E1E9E90A14300BB36AA52330 /* Project object */;
+}
