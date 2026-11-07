@@ -6,6 +6,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
 
     let styler = EditorStyler()
     private let documentUndo = UndoManager()
+    /// True until the cursor first moves, so a file opens with all its syntax hidden.
+    private var isFreshlyLoaded = false
     var onTextChange: ((String) -> Void)?
     var onDropURLs: (([URL]) -> Void)?
     private(set) var tableOverlays: [TableOverlayView] = []
@@ -84,6 +86,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         hidingLayoutManager.codeBackground = theme.panel
         hidingLayoutManager.ruleColor = theme.line
         hidingLayoutManager.quoteBarColor = theme.line
+        hidingLayoutManager.underlineColor = theme.accent
+        hidingLayoutManager.strikeColor = theme.soft
     }
 
     override var undoManager: UndoManager? { documentUndo }
@@ -96,6 +100,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         documentUndo.enableUndoRegistration()
         documentUndo.removeAllActions()
         setSelectedRange(NSRange(location: 0, length: 0))
+        isFreshlyLoaded = true
         refreshDisplay()
         positionTableOverlays()
     }
@@ -114,7 +119,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     }
 
     private func refreshDisplay(invalidate: Bool = true) {
-        let display = styler.display(selection: selectedRange())
+        let selection = isFreshlyLoaded ? NSRange(location: NSNotFound, length: 0) : selectedRange()
+        let display = styler.display(selection: selection)
         hidingLayoutManager.decorations = styler.decorations
         hidingLayoutManager.setDisplay(hidden: display.hidden, substitutions: display.substitutions, invalidate: invalidate)
     }
@@ -207,6 +213,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
             ranges = [NSValue(range: NSRange(location: caretOutsideTables(ranges[0].rangeValue.location), length: 0))]
         }
         super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelecting)
+        isFreshlyLoaded = false
         if textStorage != nil, layoutManager != nil { refreshDisplay() }
     }
 

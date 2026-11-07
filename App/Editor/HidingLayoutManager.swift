@@ -5,6 +5,8 @@ struct EditorDecorations: Equatable {
     var quotes: [NSRange] = []
     var rules: [NSRange] = []
     var chips: [NSRange] = []
+    var underlines: [NSRange] = []
+    var strikes: [NSRange] = []
 }
 
 /// Draws the document with some characters hidden or swapped, without changing the text.
@@ -17,6 +19,8 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     var codeBackground = NSColor.clear
     var ruleColor = NSColor.clear
     var quoteBarColor = NSColor.clear
+    var underlineColor = NSColor.clear
+    var strikeColor = NSColor.clear
 
     override init() {
         super.init()
@@ -122,6 +126,12 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         for range in decorations.chips {
             drawChip(range, showing: glyphsToShow, at: origin)
         }
+        for range in decorations.underlines {
+            drawLine(under: range, color: underlineColor, offset: 2.5, showing: glyphsToShow, at: origin)
+        }
+        for range in decorations.strikes {
+            drawLine(under: range, color: strikeColor, offset: -5, showing: glyphsToShow, at: origin)
+        }
         for range in decorations.quotes {
             guard let rect = fragmentsRect(of: range, showing: glyphsToShow) else { continue }
             quoteBarColor.setFill()
@@ -131,6 +141,21 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
             guard let rect = fragmentsRect(of: range, showing: glyphsToShow) else { continue }
             ruleColor.setFill()
             NSRect(x: rect.minX + origin.x, y: rect.midY + origin.y, width: rect.width, height: 1).fill()
+        }
+    }
+
+    /// Text attributes can't do this: their lines spread across a line that has hidden text at a wrap.
+    private func drawLine(under range: NSRange, color: NSColor, offset: CGFloat, showing glyphsToShow: NSRange, at origin: NSPoint) {
+        guard let length = textStorage?.length, NSMaxRange(range) <= length, let container = textContainers.first else { return }
+        let glyphs = glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+        guard NSIntersectionRange(glyphs, glyphsToShow).length > 0 else { return }
+        color.setFill()
+        enumerateLineFragments(forGlyphRange: glyphs) { fragment, _, _, lineGlyphs, _ in
+            let part = NSIntersectionRange(lineGlyphs, glyphs)
+            guard part.length > 0 else { return }
+            let bounds = self.boundingRect(forGlyphRange: part, in: container)
+            let baseline = fragment.minY + self.location(forGlyphAt: part.location).y
+            NSRect(x: bounds.minX + origin.x, y: baseline + offset + origin.y, width: bounds.width, height: 1).fill()
         }
     }
 

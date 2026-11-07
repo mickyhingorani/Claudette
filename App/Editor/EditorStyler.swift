@@ -59,18 +59,31 @@ final class EditorStyler {
     private func tightenBlankLines(in storage: NSTextStorage) {
         let text = storage.string as NSString
         let code = map.spans.filter { $0.kind == .codeBlock }.map(\.range)
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.minimumLineHeight = 8
-        paragraph.maximumLineHeight = 8
+        func style(height: CGFloat) -> NSParagraphStyle {
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.minimumLineHeight = height
+            paragraph.maximumLineHeight = height
+            return paragraph
+        }
+        let small = style(height: 8)
+        let roomy = style(height: 22)
         var location = 0
         while location < text.length {
             let line = text.lineRange(for: NSRange(location: location, length: 0))
             let isBlank = text.substring(with: line).allSatisfy(\.isNewline)
             if isBlank, !code.contains(where: { NSLocationInRange(line.location, $0) }) {
-                storage.addAttribute(.paragraphStyle, value: paragraph, range: line)
+                // A code block's background reaches past its text, so give it more room.
+                let touchesCode = code.contains { $0.location == NSMaxRange(line) || NSMaxRange($0) + newlineLength(in: text, at: NSMaxRange($0)) == line.location }
+                storage.addAttribute(.paragraphStyle, value: touchesCode ? roomy : small, range: line)
             }
             location = NSMaxRange(line)
         }
+    }
+
+    private func newlineLength(in text: NSString, at location: Int) -> Int {
+        guard location < text.length else { return 0 }
+        if text.character(at: location) == 0x0D, location + 1 < text.length, text.character(at: location + 1) == 0x0A { return 2 }
+        return 1
     }
 
     private func style(_ span: StyledSpan, in storage: NSTextStorage) {
@@ -96,8 +109,8 @@ final class EditorStyler {
         case .emphasis:
             addTrait(.italicFontMask, in: range, of: storage)
         case .strikethrough:
-            for part in visibleParts(of: range) {
-                storage.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: part)
+            if mode == .markdown {
+                storage.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: range)
             }
         case .inlineCode:
             if mode == .formatted {
@@ -113,16 +126,10 @@ final class EditorStyler {
                 paragraph.headIndent = 14
                 paragraph.tailIndent = -14
                 storage.addAttribute(.paragraphStyle, value: paragraph, range: range)
-                addCodeBlockMargins(range, base: paragraph, in: storage)
             }
         case .link(let url):
             storage.addAttribute(.claudetteURL, value: url, range: range)
             storage.addAttribute(.foregroundColor, value: theme.accent, range: range)
-            if mode == .formatted {
-                for part in visibleParts(of: range) {
-                    storage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: part)
-                }
-            }
         case .blockquote:
             storage.addAttribute(.foregroundColor, value: theme.soft, range: range)
             if mode == .formatted {
@@ -150,19 +157,6 @@ final class EditorStyler {
             parts.remove(integersIn: item.range.location..<NSMaxRange(item.range))
         }
         return parts.rangeView.map { NSRange(location: $0.lowerBound, length: $0.count) }
-    }
-
-    /// Room above and below a code block, so its background clears the text around it.
-    private func addCodeBlockMargins(_ range: NSRange, base: NSParagraphStyle, in storage: NSTextStorage) {
-        let text = storage.string as NSString
-        let margin: CGFloat = 10
-        let first = base.mutableCopy() as! NSMutableParagraphStyle
-        first.paragraphSpacingBefore = margin
-        storage.addAttribute(.paragraphStyle, value: first, range: NSIntersectionRange(text.lineRange(for: NSRange(location: range.location, length: 0)), range))
-        let lastLine = text.lineRange(for: NSRange(location: NSMaxRange(range) - 1, length: 0))
-        let last = (storage.attribute(.paragraphStyle, at: lastLine.location, effectiveRange: nil) as! NSParagraphStyle).mutableCopy() as! NSMutableParagraphStyle
-        last.paragraphSpacing = margin
-        storage.addAttribute(.paragraphStyle, value: last, range: NSIntersectionRange(lastLine, range))
     }
 
     private var monoScaled: NSFont { NSFontManager.shared.convert(theme.monoFont, toSize: (baseFont.pointSize * 0.88).rounded()) }
@@ -218,6 +212,8 @@ final class EditorStyler {
             case .codeBlock: result.codeBlocks.append(span.range)
             case .blockquote: result.quotes.append(span.range)
             case .thematicBreak: result.rules.append(span.range)
+            case .link: result.underlines.append(contentsOf: visibleParts(of: span.range))
+            case .strikethrough: result.strikes.append(contentsOf: visibleParts(of: span.range))
             case .inlineCode:
                 let marks = map.hidden.filter { $0.owner == span.range }.reduce(0) { $0 + $1.range.length } / 2
                 result.chips.append(NSRange(location: span.range.location + marks, length: span.range.length - marks * 2))

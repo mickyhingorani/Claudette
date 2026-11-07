@@ -116,25 +116,40 @@ final class EditorTests: XCTestCase {
         XCTAssertEqual(editor.string, "- [ ] todo\n")
     }
 
-    func testUnderlineSkipsHiddenLinkSyntax() {
+    func testUnderlineDrawnOnlyUnderVisibleLinkText() {
         let editor = makeEditor("[t](http://x) y")
-        let storage = editor.textStorage!
-        XCTAssertNil(storage.attribute(.underlineStyle, at: 0, effectiveRange: nil))
-        XCTAssertNotNil(storage.attribute(.underlineStyle, at: 1, effectiveRange: nil))
-        XCTAssertNil(storage.attribute(.underlineStyle, at: 2, effectiveRange: nil))
+        XCTAssertEqual(editor.hidingLayoutManager.decorations.underlines, [NSRange(location: 1, length: 1)])
+        XCTAssertNil(editor.textStorage!.attribute(.underlineStyle, at: 1, effectiveRange: nil))
     }
 
-    func testStrikethroughSkipsHiddenSyntax() {
+    func testStrikeDrawnOnlyOverVisibleText() {
         let editor = makeEditor("~~b~~ y")
-        let storage = editor.textStorage!
-        XCTAssertNil(storage.attribute(.strikethroughStyle, at: 0, effectiveRange: nil))
-        XCTAssertNotNil(storage.attribute(.strikethroughStyle, at: 2, effectiveRange: nil))
+        XCTAssertEqual(editor.hidingLayoutManager.decorations.strikes, [NSRange(location: 2, length: 1)])
     }
 
-    func testCodeBlockKeepsSpaceFromNeighbors() {
+    func testBlankLineBeforeCodeBlockLeavesRoom() {
         let editor = makeEditor("a\n\n```\nx\n```\n\nb\n")
-        let style = editor.textStorage!.attribute(.paragraphStyle, at: 3, effectiveRange: nil) as? NSParagraphStyle
-        XCTAssertGreaterThan(style?.paragraphSpacingBefore ?? 0, 0)
+        let style = editor.textStorage!.attribute(.paragraphStyle, at: 2, effectiveRange: nil) as? NSParagraphStyle
+        XCTAssertGreaterThanOrEqual(style?.minimumLineHeight ?? 0, 20)
+    }
+
+    func testBlankLineAfterCodeBlockLeavesRoom() {
+        let text = "a\n\n```\nx\n```\n\nb\n"
+        let editor = makeEditor(text)
+        let blank = (text as NSString).range(of: "\n\nb").location + 1
+        let style = editor.textStorage!.attribute(.paragraphStyle, at: blank, effectiveRange: nil) as? NSParagraphStyle
+        XCTAssertGreaterThanOrEqual(style?.minimumLineHeight ?? 0, 20)
+    }
+
+    func testFreshlyOpenedFileHidesSyntaxAtTheCursor() {
+        let editor = makeEditor("# Title\n")
+        XCTAssertTrue(editor.hidingLayoutManager.isHidden(at: 0))
+    }
+
+    func testMovingCursorIntoHeadingAfterOpeningRevealsIt() {
+        let editor = makeEditor("# Title\n\nx\n")
+        editor.setSelectedRange(NSRange(location: 3, length: 0))
+        XCTAssertFalse(editor.hidingLayoutManager.isHidden(at: 0))
     }
 
     func testLoadClearsUndo() {
