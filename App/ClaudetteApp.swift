@@ -10,7 +10,7 @@ struct ClaudetteApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        Window("Claudette", id: "main") {
             RootView(model: model)
         }
         .windowStyle(.hiddenTitleBar)

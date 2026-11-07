@@ -374,4 +374,87 @@ final class AppModelTests: XCTestCase {
         model.refresh()
         XCTAssertEqual(model.sections.last?.files.count, 0)
     }
+
+    private func waitUntil(_ condition: () -> Bool, timeout: TimeInterval = 6) -> Bool {
+        let deadline = Date(timeIntervalSinceNow: timeout)
+        while Date() < deadline {
+            if condition() { return true }
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05))
+        }
+        return condition()
+    }
+
+    func testWatcherPicksUpFileFromOutside() throws {
+        let model = AppModel(defaults: defaults, starterFolder: starter, watchesFolders: true)
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.3))
+        let file = try write("from Claude", "New.md", in: starter)
+        XCTAssertTrue(waitUntil { model.unseen.contains(file) })
+    }
+
+    func testAutosaveWritesAfterAPause() throws {
+        let model = makeModel()
+        let file = try write("a", "a.md", in: starter)
+        model.refresh()
+        model.open(file)
+        type("b", into: model)
+        XCTAssertEqual(try read(file), "a")
+        XCTAssertTrue(waitUntil { (try? self.read(file)) == "ab" })
+    }
+
+    private let tableText = "| A | B |\n|---|---|\n| 1 | 2 |\n"
+
+    func testSwitchingFilesCommitsCellBeingEdited() throws {
+        let model = makeModel()
+        let one = try write(tableText, "1.md", in: starter)
+        let two = try write("z", "2.md", in: starter)
+        model.refresh()
+        model.open(one)
+        let overlay = try XCTUnwrap(model.editor.tableOverlays.first)
+        overlay.beginEditing(row: 1, column: 0)
+        overlay.editingField?.stringValue = "typed"
+        model.open(two)
+        XCTAssertTrue(try read(one).contains("| typed | 2 |"))
+    }
+
+    func testFlushCommitsCellBeingEdited() throws {
+        let model = makeModel()
+        let file = try write(tableText, "1.md", in: starter)
+        model.refresh()
+        model.open(file)
+        let overlay = try XCTUnwrap(model.editor.tableOverlays.first)
+        overlay.beginEditing(row: 1, column: 0)
+        overlay.editingField?.stringValue = "typed"
+        model.flush()
+        XCTAssertTrue(try read(file).contains("| typed | 2 |"))
+    }
+
+    func testAutosaveDoesNotInterruptCellBeingEdited() throws {
+        let model = makeModel()
+        let file = try write(tableText, "1.md", in: starter)
+        model.refresh()
+        model.open(file)
+        let overlay = try XCTUnwrap(model.editor.tableOverlays.first)
+        overlay.beginEditing(row: 1, column: 0)
+        model.saveNow()
+        XCTAssertNotNil(overlay.editingCell)
+    }
+
+    func testFailedSaveKeepsFileOpen() throws {
+        let project = try folder("Locked")
+        let one = try write("a", "1.md", in: project)
+        let two = try write("z", "2.md", in: project)
+        let model = makeModel()
+        model.connect(project)
+        model.open(one)
+        type("b", into: model)
+        try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: project.path)
+        try FileManager.default.setAttributes([.posixPermissions: 0o444], ofItemAtPath: one.path)
+        defer {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: project.path)
+        }
+        model.open(two)
+        XCTAssertEqual(model.currentFile, one)
+        XCTAssertEqual(model.editor.string, "ab")
+        XCTAssertNotNil(model.notice)
+    }
 }

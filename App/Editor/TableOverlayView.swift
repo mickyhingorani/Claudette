@@ -14,6 +14,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     private var rowHeights: [CGFloat] = []
     private var strings: [[NSAttributedString]] = []
     private var field: NSTextField?
+    var editingField: NSTextField? { field }
     private(set) var editingCell: (row: Int, column: Int)?
 
     var onEdits: (([TextEdit]) -> Void)?
@@ -228,6 +229,10 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
         guard editing.row < table.rowCount, editing.column < table.columnCount else { return }
         let edits = TableEditor.setCell(table, row: editing.row, column: editing.column, text: text)
         if !edits.isEmpty { onEdits?(edits) }
+    }
+
+    func commitCurrentEdit() {
+        if let text = field?.stringValue { commitEditing(text: text) }
     }
 
     func moveToNextCell(committing text: String) {

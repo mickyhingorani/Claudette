@@ -127,4 +127,69 @@ final class TableEditingTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(overlay.columnWidths[2], word + 20)
         XCTAssertLessThanOrEqual(overlay.gridSize.width, 680)
     }
+
+    // Real events sent through a window, the way clicks and keys arrive in the app.
+
+    private func windowed(_ text: String) -> (NSWindow, EditorTextView) {
+        let (scroll, editor) = EditorTextView.makeInScrollView()
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 800, height: 600), styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = scroll
+        scroll.frame = NSRect(x: 0, y: 0, width: 800, height: 600)
+        editor.setFrameSize(NSSize(width: 800, height: 600))
+        editor.load(text: text)
+        editor.positionTableOverlays()
+        window.makeFirstResponder(editor)
+        return (window, editor)
+    }
+
+    /// Sends a click to the view the window would pick. A window in the background
+    /// swallows its first click, so `sendEvent` can't be used here.
+    private func click(_ window: NSWindow, at point: NSPoint) {
+        func event(_ type: NSEvent.EventType) -> NSEvent {
+            NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: 0, windowNumber: window.windowNumber,
+                               context: nil, eventNumber: 0, clickCount: 1, pressure: 1)!
+        }
+        let root = window.contentView!.superview!
+        let target = root.hitTest(root.convert(point, from: nil))
+        NSApp.postEvent(event(.leftMouseUp), atStart: false)
+        target?.mouseDown(with: event(.leftMouseDown))
+    }
+
+    func testClickOnCellOpensItForEditing() throws {
+        let (window, editor) = windowed(text)
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        let cell = NSPoint(x: 20, y: overlay.bounds.height - 12)
+        click(window, at: overlay.convert(cell, to: nil))
+        XCTAssertEqual(overlay.editingCell?.row, 1)
+        XCTAssertEqual(overlay.editingCell?.column, 0)
+    }
+
+    func testClickOnCheckboxTogglesIt() throws {
+        let (window, editor) = windowed("Intro\n\n- [ ] todo\n")
+        editor.setSelectedRange(NSRange(location: 0, length: 0))
+        let layout = editor.hidingLayoutManager
+        let glyph = layout.glyphIndexForCharacter(at: 7)
+        let rect = layout.boundingRect(forGlyphRange: NSRange(location: glyph, length: 1), in: editor.textContainer!)
+        let point = NSPoint(x: rect.midX + editor.textContainerOrigin.x, y: rect.midY + editor.textContainerOrigin.y)
+        click(window, at: editor.convert(point, to: nil))
+        XCTAssertEqual(editor.string, "Intro\n\n- [x] todo\n")
+    }
+
+    func testCommandBEventBoldsSelection() {
+        let (window, editor) = windowed("x b y")
+        editor.setSelectedRange(NSRange(location: 2, length: 1))
+        let event = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command, timestamp: 0, windowNumber: window.windowNumber,
+                                     context: nil, characters: "b", charactersIgnoringModifiers: "b", isARepeat: false, keyCode: 11)
+        XCTAssertTrue(editor.performKeyEquivalent(with: event!))
+        XCTAssertEqual(editor.string, "x **b** y")
+    }
+
+    func testTypedKeyEventEntersText() {
+        let (window, editor) = windowed("ab")
+        editor.setSelectedRange(NSRange(location: 2, length: 0))
+        let event = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: window.windowNumber,
+                                     context: nil, characters: "c", charactersIgnoringModifiers: "c", isARepeat: false, keyCode: 8)
+        window.sendEvent(event!)
+        XCTAssertEqual(editor.string, "abc")
+    }
 }

@@ -33,10 +33,10 @@ struct RootView: View {
             return true
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
-            model.saveNow()
+            model.flush()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
-            model.saveNow()
+            model.flush()
         }
     }
 

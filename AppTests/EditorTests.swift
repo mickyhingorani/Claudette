@@ -116,6 +116,27 @@ final class EditorTests: XCTestCase {
         XCTAssertEqual(editor.string, "- [ ] todo\n")
     }
 
+    func testUnderlineSkipsHiddenLinkSyntax() {
+        let editor = makeEditor("[t](http://x) y")
+        let storage = editor.textStorage!
+        XCTAssertNil(storage.attribute(.underlineStyle, at: 0, effectiveRange: nil))
+        XCTAssertNotNil(storage.attribute(.underlineStyle, at: 1, effectiveRange: nil))
+        XCTAssertNil(storage.attribute(.underlineStyle, at: 2, effectiveRange: nil))
+    }
+
+    func testStrikethroughSkipsHiddenSyntax() {
+        let editor = makeEditor("~~b~~ y")
+        let storage = editor.textStorage!
+        XCTAssertNil(storage.attribute(.strikethroughStyle, at: 0, effectiveRange: nil))
+        XCTAssertNotNil(storage.attribute(.strikethroughStyle, at: 2, effectiveRange: nil))
+    }
+
+    func testCodeBlockKeepsSpaceFromNeighbors() {
+        let editor = makeEditor("a\n\n```\nx\n```\n\nb\n")
+        let style = editor.textStorage!.attribute(.paragraphStyle, at: 3, effectiveRange: nil) as? NSParagraphStyle
+        XCTAssertGreaterThan(style?.paragraphSpacingBefore ?? 0, 0)
+    }
+
     func testLoadClearsUndo() {
         let editor = makeEditor("x b y")
         editor.setSelectedRange(NSRange(location: 2, length: 1))

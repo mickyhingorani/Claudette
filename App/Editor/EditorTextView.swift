@@ -158,6 +158,10 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         hidingLayoutManager.setReservedTables(reserved, invalidate: invalidate)
     }
 
+    func commitCellEdits() {
+        tableOverlays.forEach { $0.commitCurrentEdit() }
+    }
+
     func positionTableOverlays() {
         guard let layout = layoutManager, let storage = textStorage else { return }
         for overlay in tableOverlays where NSMaxRange(overlay.table.range) <= storage.length {

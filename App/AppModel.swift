@@ -120,7 +120,8 @@ final class AppModel: ObservableObject {
 
     func disconnect(_ url: URL) {
         let folder = Self.folderURL(url.path)
-        saveNow()
+        flush()
+        guard !isDirty else { return }
         folders.removeAll { $0 == folder }
         foldersChanged()
         if let currentFile, !isInConnectedFolder(currentFile) {
@@ -195,7 +196,8 @@ final class AppModel: ObservableObject {
 
     func open(_ file: URL) {
         let url = URL(fileURLWithPath: file.path)
-        saveNow()
+        flush()
+        guard !isDirty else { return }
         do {
             let file = try DocumentFile(url: url)
             document = file
@@ -213,8 +215,8 @@ final class AppModel: ObservableObject {
     }
 
     func newFile() {
-        saveNow()
-        guard let folder = currentFolder else { return }
+        flush()
+        guard !isDirty, let folder = currentFolder else { return }
         closeDocument()
         draftFolder = folder
         editor.window?.makeFirstResponder(editor)
@@ -249,6 +251,12 @@ final class AppModel: ObservableObject {
         let work = DispatchWorkItem { [weak self] in self?.saveNow() }
         autosave = work
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.autosaveDelay, execute: work)
+    }
+
+    /// Saves everything, including a table cell still being typed in.
+    func flush() {
+        editor.commitCellEdits()
+        saveNow()
     }
 
     func saveNow() {
@@ -355,7 +363,7 @@ final class AppModel: ObservableObject {
     // MARK: Rename and trash
 
     func rename(_ url: URL, to name: String) {
-        saveNow()
+        flush()
         var clean = name.trimmingCharacters(in: .whitespaces)
         if clean.lowercased().hasSuffix(".md") { clean = String(clean.dropLast(3)) }
         clean = FileNaming.name(fromFirstLineOf: clean)
