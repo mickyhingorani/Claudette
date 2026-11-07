@@ -176,6 +176,9 @@ final class EditorStyler {
                 hidden.insert(integersIn: (item.range.location + 1)..<NSMaxRange(item.range))
             }
         }
+        for table in map.tables {
+            hidden.insert(integersIn: table.range.location..<NSMaxRange(table.range))
+        }
         return (hidden, substitutions)
     }
 

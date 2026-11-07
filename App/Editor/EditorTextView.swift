@@ -7,6 +7,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     let styler = EditorStyler()
     private let documentUndo = UndoManager()
     var onTextChange: ((String) -> Void)?
+    private(set) var tableOverlays: [TableOverlayView] = []
 
     var hidingLayoutManager: HidingLayoutManager { layoutManager as! HidingLayoutManager }
 
@@ -94,6 +95,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         documentUndo.removeAllActions()
         setSelectedRange(NSRange(location: 0, length: 0))
         refreshDisplay()
+        positionTableOverlays()
     }
 
     func restyle() {
@@ -103,7 +105,9 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         styler.apply(to: storage)
         storage.endEditing()
         typingAttributes = styler.typingAttributes
+        syncTables(invalidate: true)
         refreshDisplay()
+        positionTableOverlays()
         needsDisplay = true
     }
 
@@ -118,7 +122,71 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         guard editedMask.contains(.editedCharacters) else { return }
         styler.rescan(textStorage.string)
         styler.apply(to: textStorage)
+        syncTables(invalidate: false)
         refreshDisplay(invalidate: false)
+    }
+
+    // MARK: Tables
+
+    private var tableWidth: CGFloat {
+        max(120, bounds.width - textContainerInset.width * 2 - (textContainer?.lineFragmentPadding ?? 0) * 2)
+    }
+
+    /// Matches overlays to the tables in the text, reusing views so cell editing carries on.
+    private func syncTables(invalidate: Bool) {
+        let tables = viewMode == .formatted ? styler.map.tables : []
+        while tableOverlays.count > tables.count {
+            tableOverlays.removeLast().removeFromSuperview()
+        }
+        for (index, table) in tables.enumerated() {
+            if index < tableOverlays.count {
+                tableOverlays[index].update(table: table, theme: theme, width: tableWidth)
+            } else {
+                let overlay = TableOverlayView(table: table, theme: theme, width: tableWidth)
+                overlay.onEdits = { [weak self] edits in self?.applyEdits(edits) }
+                overlay.onFinishEditing = { [weak self] in
+                    guard let self else { return }
+                    self.window?.makeFirstResponder(self)
+                }
+                addSubview(overlay)
+                tableOverlays.append(overlay)
+            }
+        }
+        let reserved = zip(tables, tableOverlays).map { (range: $0.range, height: $1.gridSize.height) }
+        hidingLayoutManager.setReservedTables(reserved, invalidate: invalidate)
+    }
+
+    func positionTableOverlays() {
+        guard let layout = layoutManager, let storage = textStorage else { return }
+        for overlay in tableOverlays where NSMaxRange(overlay.table.range) <= storage.length {
+            let glyph = layout.glyphIndexForCharacter(at: overlay.table.range.location)
+            let rect = layout.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
+            let padding = textContainer?.lineFragmentPadding ?? 0
+            let frame = NSRect(x: rect.minX + textContainerOrigin.x + padding, y: rect.minY + textContainerOrigin.y,
+                               width: overlay.gridSize.width, height: overlay.gridSize.height)
+            if overlay.frame != frame { overlay.frame = frame }
+        }
+    }
+
+    override func viewWillDraw() {
+        positionTableOverlays()
+        super.viewWillDraw()
+    }
+
+    /// Where the caret goes instead of landing inside a table's hidden source.
+    private func caretOutsideTables(_ location: Int) -> Int {
+        guard viewMode == .formatted,
+              let table = styler.map.tables.first(where: { location >= $0.range.location && location <= NSMaxRange($0.range) })
+        else { return location }
+        let ns = string as NSString
+        let forward = location >= selectedRange().location || table.range.location == 0
+        if forward {
+            let line = ns.lineRange(for: NSRange(location: NSMaxRange(table.range), length: 0))
+            return min(NSMaxRange(line), ns.length)
+        }
+        var before = table.range.location - 1
+        if before > 0, ns.character(at: before) == 0x0A, ns.character(at: before - 1) == 0x0D { before -= 1 }
+        return before
     }
 
     override func didChangeText() {
@@ -128,6 +196,10 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     }
 
     override func setSelectedRanges(_ ranges: [NSValue], affinity: NSSelectionAffinity, stillSelecting: Bool) {
+        var ranges = ranges
+        if ranges.count == 1, ranges[0].rangeValue.length == 0, textStorage != nil {
+            ranges = [NSValue(range: NSRange(location: caretOutsideTables(ranges[0].rangeValue.location), length: 0))]
+        }
         super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelecting)
         if textStorage != nil, layoutManager != nil { refreshDisplay() }
     }
@@ -138,6 +210,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         if textContainerInset.width != side {
             textContainerInset = NSSize(width: side, height: 14)
         }
+        if textStorage != nil, layoutManager != nil { syncTables(invalidate: true) }
     }
 
     // MARK: Editing commands
@@ -148,6 +221,20 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         storage.replaceCharacters(in: range, with: replacement)
         didChangeText()
         return true
+    }
+
+    /// Applies several edits as one undo step.
+    func applyEdits(_ edits: [TextEdit]) {
+        var selection = selectedRange()
+        documentUndo.beginUndoGrouping()
+        for edit in edits.sorted(by: { $0.range.location > $1.range.location }) {
+            guard applyEdit(edit.range, edit.replacement) else { continue }
+            if edit.range.location < selection.location {
+                selection.location += (edit.replacement as NSString).length - edit.range.length
+            }
+        }
+        documentUndo.endUndoGrouping()
+        setSelectedRange(selection)
     }
 
     func toggleWrap(marker: String) {

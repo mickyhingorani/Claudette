@@ -12,6 +12,8 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     private(set) var hidden = IndexSet()
     private(set) var substitutions: [Int: Character] = [:]
     var decorations = EditorDecorations()
+    /// Tables drawn over hidden source, as the source range and the height to reserve.
+    private(set) var reservedTables: [(range: NSRange, height: CGFloat)] = []
     var codeBackground = NSColor.clear
     var ruleColor = NSColor.clear
     var quoteBarColor = NSColor.clear
@@ -47,6 +49,29 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
             invalidateGlyphs(forCharacterRange: paragraph, changeInLength: 0, actualCharacterRange: nil)
             invalidateLayout(forCharacterRange: paragraph, actualCharacterRange: nil)
         }
+    }
+
+    func setReservedTables(_ tables: [(range: NSRange, height: CGFloat)], invalidate: Bool) {
+        let changed = tables.map(\.height) != reservedTables.map(\.height)
+        reservedTables = tables
+        guard invalidate, changed, let length = textStorage?.length else { return }
+        for table in tables where NSMaxRange(table.range) <= length {
+            invalidateLayout(forCharacterRange: table.range, actualCharacterRange: nil)
+        }
+    }
+
+    func layoutManager(_ layoutManager: NSLayoutManager,
+                       shouldSetLineFragmentRect lineFragmentRect: UnsafeMutablePointer<NSRect>,
+                       lineFragmentUsedRect: UnsafeMutablePointer<NSRect>,
+                       baselineOffset: UnsafeMutablePointer<CGFloat>,
+                       in textContainer: NSTextContainer,
+                       forGlyphRange glyphRange: NSRange) -> Bool {
+        guard !reservedTables.isEmpty else { return false }
+        let characters = characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
+        guard let table = reservedTables.first(where: { NSIntersectionRange($0.range, characters).length > 0 }) else { return false }
+        lineFragmentRect.pointee.size.height = table.height
+        lineFragmentUsedRect.pointee.size.height = table.height
+        return true
     }
 
     func layoutManager(_ layoutManager: NSLayoutManager,

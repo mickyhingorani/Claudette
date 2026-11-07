@@ -27,3 +27,13 @@ print(trip)
 ```
 
 ~~Old idea~~ and an image: ![map](map.png)
+
+## Costs
+
+| Item | Notes | Price |
+|:-----|:------|------:|
+| Flights 😀 | **Direct** from Boston, and this note runs long enough that it has to wrap inside its cell to show how that looks | $420 |
+| Hotel | Four nights near `Chiado` | $610 |
+| Food | See [the list](https://example.com) \| budget | $200 |
+
+Text after the table.

@@ -19,6 +19,7 @@ enum Snapshot {
         let cursor = defaults.object(forKey: "snapshotCursor") == nil ? (text as NSString).length : defaults.integer(forKey: "snapshotCursor")
         editor.setSelectedRange(NSRange(location: cursor, length: 0))
         window.layoutIfNeeded()
+        editor.positionTableOverlays()
         write(scroll, to: out)
         exit(0)
     }
