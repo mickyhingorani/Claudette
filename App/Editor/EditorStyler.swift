@@ -187,7 +187,9 @@ final class EditorStyler {
                 let scales: [CGFloat] = [1.7, 1.35, 1.15]
                 let scale = level <= 3 ? scales[level - 1] : 1
                 let size = (baseFont.pointSize * scale).rounded()
-                storage.addAttribute(.font, value: font(theme.headingFont, size: size, trait: .boldFontMask), range: range)
+                let face = level == 1 && theme.titleFace != nil
+                    ? font(theme.titleFont, size: size) : font(theme.headingFont, size: size, trait: .boldFontMask)
+                storage.addAttribute(.font, value: face, range: range)
                 let paragraph = baseParagraph
                 paragraph.paragraphSpacingBefore = level == 1 ? 8 : 14
                 paragraph.paragraphSpacing = 6

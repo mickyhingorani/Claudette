@@ -24,11 +24,14 @@
 		350B6C47BCB3047D0F44C67A /* HidingLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4097A68E275D263A6D78F5 /* HidingLayoutManager.swift */; };
 		379AE30927A3A4076AA44076 /* FolderWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD423DB075FF474B94C7621 /* FolderWatcher.swift */; };
 		3D9FF715F48753E2D69795E2 /* JetBrainsMono-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2AD2D3024694420D4879750F /* JetBrainsMono-Italic[wght].ttf */; };
+		40F8D81A48C23A91687FDB68 /* Newsreader-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 8398708455DB6149C785F77C /* Newsreader-OFL.txt */; };
 		415A729A4D294FA3888AB804 /* RealPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */; };
 		473B73939A6A22DFBF9D3CC4 /* AtkinsonHyperlegibleNext-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 42254BC4ECD9559141DF391B /* AtkinsonHyperlegibleNext-OFL.txt */; };
+		47530DCC6BC8840A10A0096F /* HankenGrotesk-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = C6BEAD6EA2846B2B5642673E /* HankenGrotesk-Italic[wght].ttf */; };
 		4D34D7A9629A5055E804620B /* JetBrainsMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4BC9F1E7148162EDE1EE2D9A /* JetBrainsMono-OFL.txt */; };
 		501683150F9D895D2FBF86DE /* TableEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */; };
 		52385B554F5710B809F56AD6 /* Geist-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2616A19BD427A3B67AE3B94D /* Geist-OFL.txt */; };
+		53EDFD9DE91109BC75AD06D1 /* Newsreader-Italic[opsz,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3676FD96C48199431D2A5F6B /* Newsreader-Italic[opsz,wght].ttf */; };
 		5F0C9D4F9FB57904DF8AE260 /* DocumentSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0068C5EA5572C4BF41E52F1D /* DocumentSessionTests.swift */; };
 		5FE6E48ACCB163F2F5386735 /* IBMPlexSans-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = DFAB8DC78977B6E9410F8709 /* IBMPlexSans-OFL.txt */; };
 		6057C59D3A31DB3B15C67764 /* IBMPlexMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = F2D6B3B208061A672D0A4283 /* IBMPlexMono-OFL.txt */; };
@@ -40,7 +43,9 @@
 		6DC23D45A3BE360EDE9A9D7D /* AtkinsonHyperlegibleNext[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 12A07D8B779FEAC1A331A035 /* AtkinsonHyperlegibleNext[wght].ttf */; };
 		72E41326F5724B84FF740E1F /* AtkinsonHyperlegibleNext-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0B581B0DA980BDC3A1DB2F22 /* AtkinsonHyperlegibleNext-Italic[wght].ttf */; };
 		7A79FC0F741B39CE04789344 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9715F52408350CB000B481D /* AppModel.swift */; };
+		7FAB53C68E4EB0608E33340E /* HankenGrotesk[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = FD8E5E9376F195009D000D33 /* HankenGrotesk[wght].ttf */; };
 		89CE99D5BBCDBA9F17B95CF0 /* IBMPlexSans[wdth,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 28F5AE0FD2D2685603753EFF /* IBMPlexSans[wdth,wght].ttf */; };
+		93E893945389FD93C6D424FA /* Newsreader[opsz,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9AAE7E933A809B786D19CDF9 /* Newsreader[opsz,wght].ttf */; };
 		940FA2A577F8DBBAE5E884A7 /* GeistMono-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = E08452B54F3CA78B4D68312B /* GeistMono-Italic[wght].ttf */; };
 		9A1BBA0E0F436E43BF7A06C6 /* GuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69B12467E99F0EC48E96F4AA /* GuideView.swift */; };
 		9DF77424AD9ACC2E1A3B4731 /* CalloutAndCheckboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1886E3FCD8457D0D28CA0D4 /* CalloutAndCheckboxTests.swift */; };
@@ -59,6 +64,7 @@
 		E7EFFDECB3D7AEE00E9E191D /* FontFallbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8928670B0C5136903A5E10AE /* FontFallbackTests.swift */; };
 		E9757EC2C7B88B987A2FCEEC /* Snapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841420B921672F16E1F5D936 /* Snapshot.swift */; };
 		EC9FF80388CCF0084AA008B5 /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55A5438F65AE9739BCE3AEE1 /* FileListView.swift */; };
+		ECFCD6F0F33D13C382AC052F /* HankenGrotesk-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 8E81E798152E8CE935442C0E /* HankenGrotesk-OFL.txt */; };
 		F4A33C31CFE78FB12874452F /* ThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F101BB4C638D9E7178C4F /* ThemeTests.swift */; };
 		F4C0D67433E10CABED133846 /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B76BC5863CD4299C8E0638C /* ImageLoader.swift */; };
 		F89A9C67DE2ED80C33E4E232 /* CaretTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7814F2703382C891EDDC610 /* CaretTests.swift */; };
@@ -90,6 +96,7 @@
 		2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealPathTests.swift; sourceTree = "<group>"; };
 		2FD423DB075FF474B94C7621 /* FolderWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderWatcher.swift; sourceTree = "<group>"; };
 		3326C1AE582E0280FB0122B4 /* LinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkTests.swift; sourceTree = "<group>"; };
+		3676FD96C48199431D2A5F6B /* Newsreader-Italic[opsz,wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Newsreader-Italic[opsz,wght].ttf"; sourceTree = "<group>"; };
 		411D6E3AEF8DA821FDFC63BD /* GeistMono-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "GeistMono-OFL.txt"; sourceTree = "<group>"; };
 		42254BC4ECD9559141DF391B /* AtkinsonHyperlegibleNext-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "AtkinsonHyperlegibleNext-OFL.txt"; sourceTree = "<group>"; };
 		438CCFB4AD275C881EC89E07 /* GeistMono[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GeistMono[wght].ttf"; sourceTree = "<group>"; };
@@ -105,13 +112,16 @@
 		69B12467E99F0EC48E96F4AA /* GuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideView.swift; sourceTree = "<group>"; };
 		7E4686DDE37BF53C77F82A85 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
 		818CC86FF5295B038D507C33 /* EditorTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTextView.swift; sourceTree = "<group>"; };
+		8398708455DB6149C785F77C /* Newsreader-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Newsreader-OFL.txt"; sourceTree = "<group>"; };
 		841420B921672F16E1F5D936 /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
 		84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudetteApp.swift; sourceTree = "<group>"; };
 		872C2316D731CE800F69D51A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8928670B0C5136903A5E10AE /* FontFallbackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontFallbackTests.swift; sourceTree = "<group>"; };
+		8E81E798152E8CE935442C0E /* HankenGrotesk-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "HankenGrotesk-OFL.txt"; sourceTree = "<group>"; };
 		8FA0DA4D86C871865A0A6AF1 /* IBMPlexMono-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-Italic.ttf"; sourceTree = "<group>"; };
 		940B8A35B594596B20FE853C /* ImageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageTests.swift; sourceTree = "<group>"; };
 		96D9C0257768097483F1AE63 /* EditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTests.swift; sourceTree = "<group>"; };
+		9AAE7E933A809B786D19CDF9 /* Newsreader[opsz,wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Newsreader[opsz,wght].ttf"; sourceTree = "<group>"; };
 		9B4097A68E275D263A6D78F5 /* HidingLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HidingLayoutManager.swift; sourceTree = "<group>"; };
 		9E60578DCA7915693FA7EBB1 /* EditorStyler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorStyler.swift; sourceTree = "<group>"; };
 		A6F47EA458A587DE658DA260 /* IBMPlexMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-Regular.ttf"; sourceTree = "<group>"; };
@@ -120,6 +130,7 @@
 		AAB462AE787EFE81200A98E1 /* JetBrainsMono[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono[wght].ttf"; sourceTree = "<group>"; };
 		B17989DDD758FF6619372CD3 /* ParagraphTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParagraphTests.swift; sourceTree = "<group>"; };
 		C4819C256EEBDE1176786EA4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		C6BEAD6EA2846B2B5642673E /* HankenGrotesk-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "HankenGrotesk-Italic[wght].ttf"; sourceTree = "<group>"; };
 		C8BCF9F6ED0A88FDCF044A29 /* IBMPlexMono-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-Bold.ttf"; sourceTree = "<group>"; };
 		D5EA10FA3D89E1E7956DEBE1 /* TypingSpeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypingSpeedTests.swift; sourceTree = "<group>"; };
 		D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
@@ -132,6 +143,7 @@
 		F2D6B3B208061A672D0A4283 /* IBMPlexMono-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "IBMPlexMono-OFL.txt"; sourceTree = "<group>"; };
 		F7814F2703382C891EDDC610 /* CaretTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaretTests.swift; sourceTree = "<group>"; };
 		FA5F101BB4C638D9E7178C4F /* ThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeTests.swift; sourceTree = "<group>"; };
+		FD8E5E9376F195009D000D33 /* HankenGrotesk[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "HankenGrotesk[wght].ttf"; sourceTree = "<group>"; };
 		FDA016501C14EAB655624BD2 /* IBMPlexSans-Italic[wdth,wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexSans-Italic[wdth,wght].ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -159,6 +171,9 @@
 				E08452B54F3CA78B4D68312B /* GeistMono-Italic[wght].ttf */,
 				411D6E3AEF8DA821FDFC63BD /* GeistMono-OFL.txt */,
 				438CCFB4AD275C881EC89E07 /* GeistMono[wght].ttf */,
+				C6BEAD6EA2846B2B5642673E /* HankenGrotesk-Italic[wght].ttf */,
+				8E81E798152E8CE935442C0E /* HankenGrotesk-OFL.txt */,
+				FD8E5E9376F195009D000D33 /* HankenGrotesk[wght].ttf */,
 				C8BCF9F6ED0A88FDCF044A29 /* IBMPlexMono-Bold.ttf */,
 				686721175B082A3CD208B06D /* IBMPlexMono-BoldItalic.ttf */,
 				8FA0DA4D86C871865A0A6AF1 /* IBMPlexMono-Italic.ttf */,
@@ -170,6 +185,9 @@
 				2AD2D3024694420D4879750F /* JetBrainsMono-Italic[wght].ttf */,
 				4BC9F1E7148162EDE1EE2D9A /* JetBrainsMono-OFL.txt */,
 				AAB462AE787EFE81200A98E1 /* JetBrainsMono[wght].ttf */,
+				3676FD96C48199431D2A5F6B /* Newsreader-Italic[opsz,wght].ttf */,
+				8398708455DB6149C785F77C /* Newsreader-OFL.txt */,
+				9AAE7E933A809B786D19CDF9 /* Newsreader[opsz,wght].ttf */,
 			);
 			path = Fonts;
 			sourceTree = "<group>";
@@ -357,6 +375,9 @@
 				0A45766E1BB3DA9C8E76E5F1 /* GeistMono-OFL.txt in Resources */,
 				E4BF84F193C79524F515D75D /* GeistMono[wght].ttf in Resources */,
 				D53D0FD3F8A3EA236F6A23E1 /* Geist[wght].ttf in Resources */,
+				47530DCC6BC8840A10A0096F /* HankenGrotesk-Italic[wght].ttf in Resources */,
+				ECFCD6F0F33D13C382AC052F /* HankenGrotesk-OFL.txt in Resources */,
+				7FAB53C68E4EB0608E33340E /* HankenGrotesk[wght].ttf in Resources */,
 				67D633573EDFD173843A1D83 /* IBMPlexMono-Bold.ttf in Resources */,
 				2F65B9D29ED69E525C74F3F3 /* IBMPlexMono-BoldItalic.ttf in Resources */,
 				1E007A53D7E04A3F1625C2A9 /* IBMPlexMono-Italic.ttf in Resources */,
@@ -368,6 +389,9 @@
 				3D9FF715F48753E2D69795E2 /* JetBrainsMono-Italic[wght].ttf in Resources */,
 				4D34D7A9629A5055E804620B /* JetBrainsMono-OFL.txt in Resources */,
 				6C792218CE729EAD897233E8 /* JetBrainsMono[wght].ttf in Resources */,
+				53EDFD9DE91109BC75AD06D1 /* Newsreader-Italic[opsz,wght].ttf in Resources */,
+				40F8D81A48C23A91687FDB68 /* Newsreader-OFL.txt in Resources */,
+				93E893945389FD93C6D424FA /* Newsreader[opsz,wght].ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -19,6 +19,7 @@ For what's been built and what's next, see the [roadmap](docs/roadmap.md).
   - Slate (the default): Atkinson Hyperlegible Next, with JetBrains Mono code
   - Solarized: IBM Plex Sans, with IBM Plex Mono code
   - Nord: Geist, with Geist Mono code
+  - Harbor: deep teal with gold and pink; Newsreader titles, Hanken Grotesk text, JetBrains Mono code
   - Terminal: JetBrains Mono throughout
 - Code blocks are syntax highlighted for about 190 languages, in each theme's colors. A block whose fence names its language shows that language and a Copy button in its corner.
 

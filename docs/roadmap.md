@@ -16,6 +16,7 @@ Micky gets Markdown files from Claude and wanted a calm place on the Mac to read
 | [#4](https://github.com/mickyhingorani/Claudette/pull/4) | 8 Nov | Pictures, callouts, drawn checkboxes, the app icon, the Markdown guide, list continuation and sub-bullets, all 15 code-review fixes, faster typing, and two cleanups |
 | [#5](https://github.com/mickyhingorani/Claudette/pull/5) | 8 Nov | A language label and Copy button on code blocks |
 | [#6](https://github.com/mickyhingorani/Claudette/pull/6) | 8 Nov | Opening a Markdown file from anywhere, in place, with an "Opened files" list |
+| [#7](https://github.com/mickyhingorani/Claudette/pull/7) | 8 Nov | Emoji and symbols draw again; this roadmap and `CLAUDE.md` |
 
 Decisions along the way:
 - **Folder app, not library app.** Claudette works on folders and files where they are, and keeps no private copy. A write-up of the two approaches is in the design document.
@@ -26,7 +27,7 @@ Decisions along the way:
 
 Claudette reads and edits Markdown with:
 - **Views:** a formatted view and a Markdown view (`⌘E`), both editable. The formatted view hides Markdown syntax except where the cursor is.
-- **Themes:** Slate (the default), Solarized, Nord and Terminal, each with its own fonts and colors.
+- **Themes:** Slate (the default), Solarized, Nord, Harbor and Terminal, each with its own fonts and colors. Harbor (deep teal, gold and pink, after a developer docs site) adds serif titles, a blue Note callout and outlined code.
 - **Text and code:** headings, bold, italics, links, strikethrough, inline code, quotes and dividers. Code blocks get syntax colors, a language label and a Copy button.
 - **Tables:** drawn as real tables and edited in place.
 - **Pictures:** from the Mac or the web.
@@ -39,11 +40,11 @@ Claudette reads and edits Markdown with:
   - Autosave, conflict copies, and reloading when a file changes outside the app.
 - **Links:** ⌘-click opens web and email links, and links to other Markdown notes.
 
-The code is on `main`, and 530 tests pass. The app runs from Xcode's build folder; it isn't installed in Applications yet.
+The code is on `main`, and 538 tests pass. The app runs from Xcode's build folder; it isn't installed in Applications yet.
 
 ## What's next
 
-Nothing is in progress. Saved for later, roughly in order of usefulness:
+In progress: the Harbor theme, on `claude/harbor-theme`. Saved for later, roughly in order of usefulness:
 
 1. **Two bugs you could hit in normal use:**
    - Clicking the file that's already open clears its undo history and jumps to the top.

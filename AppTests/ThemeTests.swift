@@ -29,7 +29,7 @@ final class ThemeTests: XCTestCase {
     }
 
     func testAllThemesAreOffered() {
-        XCTAssertEqual(Theme.all.map(\.name), ["Slate", "Nord", "Solarized", "Terminal"])
+        XCTAssertEqual(Theme.all.map(\.name), ["Slate", "Nord", "Solarized", "Harbor", "Terminal"])
     }
 
     func testSlateIsTheDefault() {
@@ -51,6 +51,7 @@ final class ThemeTests: XCTestCase {
             ["Atkinson Hyperlegible Next", "Atkinson Hyperlegible Next", "JetBrains Mono"],
             ["Geist", "Geist", "Geist Mono"],
             ["IBM Plex Sans", "IBM Plex Sans", "IBM Plex Mono"],
+            ["Hanken Grotesk", "Hanken Grotesk", "JetBrains Mono"],
             ["JetBrains Mono", "JetBrains Mono", "JetBrains Mono"],
         ])
     }
@@ -58,7 +59,7 @@ final class ThemeTests: XCTestCase {
     func testEveryThemeFontHasBoldAndItalic() {
         let manager = NSFontManager.shared
         for theme in Theme.all {
-            for font in [theme.bodyFont, theme.monoFont] {
+            for font in [theme.titleFont, theme.bodyFont, theme.monoFont] {
                 let bold = manager.convert(font, toHaveTrait: .boldFontMask)
                 let italic = manager.convert(font, toHaveTrait: .italicFontMask)
                 XCTAssertTrue(manager.traits(of: bold).contains(.boldFontMask), "\(theme.name) \(font.fontName)")
@@ -90,6 +91,32 @@ final class ThemeTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(contrast(theme.soft, theme.background), 4.5, theme.name)
             XCTAssertGreaterThanOrEqual(contrast(theme.accent, theme.background), 4.5, theme.name)
             XCTAssertGreaterThanOrEqual(contrast(theme.text, theme.panel), 4.5, theme.name)
+        }
+    }
+
+    /// Harbor sets its big titles in a serif; every other theme uses its heading font.
+    func testTitleFonts() {
+        XCTAssertEqual(Theme.harbor.titleFont.familyName, "Newsreader")
+        for theme in Theme.all where theme != .harbor {
+            XCTAssertEqual(theme.titleFont, theme.headingFont, theme.name)
+        }
+    }
+
+    /// Harbor's Note callouts are blue, not its gold link color; other themes keep theirs.
+    func testHarborNoteCalloutIsBlue() {
+        let harbor = Theme.harbor.palette
+        XCTAssertNotEqual(harbor.callout(.note), harbor.link)
+        XCTAssertGreaterThanOrEqual(contrast(harbor.callout(.note), Theme.harbor.background), 4.5)
+        for theme in Theme.all where theme != .harbor {
+            XCTAssertEqual(theme.palette.callout(.note), theme.palette.link, theme.name)
+        }
+    }
+
+    /// Only Harbor outlines its code chips and code blocks.
+    func testOnlyHarborOutlinesCode() {
+        XCTAssertNotNil(Theme.harbor.outline)
+        for theme in Theme.all where theme != .harbor {
+            XCTAssertNil(theme.outline, theme.name)
         }
     }
 
@@ -161,6 +188,28 @@ final class ThemeFontEditorTests: XCTestCase {
         XCTAssertEqual(heading.familyName, "IBM Plex Sans")
         XCTAssertEqual(body.familyName, "IBM Plex Sans")
         XCTAssertGreaterThan(heading.pointSize, body.pointSize)
+    }
+
+    func testEditorPassesTheOutlineToDrawing() {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.theme = .harbor
+        XCTAssertEqual(editor.hidingLayoutManager.outlineColor, Theme.harbor.outline)
+        editor.theme = .slate
+        XCTAssertNil(editor.hidingLayoutManager.outlineColor)
+    }
+
+    /// Harbor: `#` titles in regular-weight Newsreader, `##` and below in bold Hanken Grotesk.
+    func testHarborTitlesAreSerifAndSmallerHeadingsAreBoldSans() {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.theme = .harbor
+        editor.load(text: "# Title\n\n## Part\n\nbody\n")
+        let manager = NSFontManager.shared
+        let title = editor.textStorage!.attribute(.font, at: 3, effectiveRange: nil) as! NSFont
+        let part = editor.textStorage!.attribute(.font, at: 13, effectiveRange: nil) as! NSFont
+        XCTAssertEqual(title.familyName, "Newsreader")
+        XCTAssertFalse(manager.traits(of: title).contains(.boldFontMask))
+        XCTAssertEqual(part.familyName, "Hanken Grotesk")
+        XCTAssertTrue(manager.traits(of: part).contains(.boldFontMask))
     }
 }
 
