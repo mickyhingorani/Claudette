@@ -2,6 +2,8 @@
 
 A simple, dark Markdown app for macOS, with minimal chrome. It's a calm place to read and edit Markdown files, especially ones Claude writes, right where they live on your Mac.
 
+For what's been built and what's next, see the [roadmap](docs/roadmap.md).
+
 - Edit in a formatted view or a plain Markdown view (`⌘E`). Both show the same text, so viewing a file never changes it.
 - Tables are drawn as real tables. Click a cell to edit it.
 - Images on a line of their own show as pictures, from your Mac or the web. Click one to edit its Markdown.
