@@ -20,9 +20,26 @@ public enum MarkdownScanner {
                 + ns.substring(from: frontmatter.endOfLastLine)
         }
         var walker = Walker(ns: ns, lines: LineIndex(source), map: map)
-        walker.visit(Document(parsing: parseText))
+        walker.visit(Document(parsing: fillingEmptyListItems(parseText)))
         walker.map.paragraphBreaks = paragraphBreaks(in: ns, map: walker.map)
         return walker.map.sorted().shifted(by: base)
+    }
+
+    /// A list marker with nothing after it, like the one Return or Tab just made, isn't a list
+    /// item to the parser when it follows text: an empty item can't start a list there, and a
+    /// lone "-" reads as a heading underline. For reading only, such lines get an invisible
+    /// character after the marker. It sits at the end of its line, so no position before it moves.
+    private static let emptyItem = try! NSRegularExpression(pattern: "^[ \\t]*(?:[-*+]|[0-9]{1,9}[.)]) +(?=\\r?$)", options: [.anchorsMatchLines])
+
+    static func fillingEmptyListItems(_ text: String) -> String {
+        let ns = text as NSString
+        let matches = emptyItem.matches(in: text, range: NSRange(location: 0, length: ns.length))
+        guard !matches.isEmpty else { return text }
+        let filled = NSMutableString(string: text)
+        for match in matches.reversed() {
+            filled.insert("\u{2060}", at: NSMaxRange(match.range))
+        }
+        return filled as String
     }
 
     /// The newline ending each line of text that's followed by a blank line, outside code and frontmatter.
@@ -76,6 +93,8 @@ private struct Walker: MarkupWalker {
     let lines: LineIndex
     var map: StyleMap
     var quoteDepth = 0
+    /// How many lists the current item sits inside, counting its own.
+    var listDepth = 0
 
     private func nsRange(_ markup: Markup) -> NSRange? {
         guard let range = markup.range else { return nil }
@@ -251,6 +270,27 @@ private struct Walker: MarkupWalker {
         return nil
     }
 
+    mutating func visitUnorderedList(_ list: UnorderedList) {
+        listDepth += 1
+        descendInto(list)
+        listDepth -= 1
+    }
+
+    mutating func visitOrderedList(_ list: OrderedList) {
+        listDepth += 1
+        descendInto(list)
+        listDepth -= 1
+    }
+
+    /// A solid bullet at the top level, hollow one level in, and a small square deeper.
+    private var bulletGlyph: String {
+        switch listDepth {
+        case ...1: return "•"
+        case 2: return "◦"
+        default: return "▪"
+        }
+    }
+
     mutating func visitListItem(_ listItem: ListItem) {
         if let range = nsRange(listItem) {
             scanMarker(of: listItem, in: range)
@@ -287,7 +327,7 @@ private struct Walker: MarkupWalker {
         let marker = NSRange(location: start, length: markerLength)
         map.spans.append(StyledSpan(range: marker, kind: .listItem))
         if isBullet {
-            map.substitutions.append(Substitution(range: marker, glyph: "•", owner: marker))
+            map.substitutions.append(Substitution(range: marker, glyph: bulletGlyph, owner: marker))
         }
     }
 

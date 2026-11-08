@@ -26,11 +26,14 @@ public struct LineIndex: Sendable {
         totalUTF16 = utf16
     }
 
-    /// `line` and `utf8Column` are 1-based. Positions past the end clamp to the end.
+    /// `line` and `utf8Column` are 1-based. Positions past the end of a line clamp to its end.
     public func offset(line: Int, utf8Column: Int) -> Int {
         guard line >= 1, line <= lineStartsUTF8.count else { return totalUTF16 }
         var i = lineStartsUTF8[line - 1]
-        let target = min(i + utf8Column - 1, bytes.count)
+        // A column can't reach past its own line, into the next one.
+        var lineEnd = line < lineStartsUTF8.count ? lineStartsUTF8[line] : bytes.count
+        while lineEnd > i, bytes[lineEnd - 1] == 0x0A || bytes[lineEnd - 1] == 0x0D { lineEnd -= 1 }
+        let target = min(i + utf8Column - 1, lineEnd)
         var utf16 = lineStartsUTF16[line - 1]
         while i < target {
             let width = Self.width(ofLeadByte: bytes[i])

@@ -103,6 +103,16 @@ final class EditorStyler {
         [.font: baseFont, .foregroundColor: theme.text, .paragraphStyle: baseParagraph]
     }
 
+    private static func font(drawing symbol: String, size: CGFloat) -> NSFont? {
+        let candidates = [NSFont.systemFont(ofSize: size), NSFont(name: "Apple Symbols", size: size)].compactMap { $0 }
+        return candidates.first { has(symbol, in: $0) }
+    }
+
+    private static func has(_ symbol: String, in font: NSFont) -> Bool {
+        var glyphs = [CGGlyph](repeating: 0, count: symbol.utf16.count)
+        return CTFontGetGlyphsForCharacters(font as CTFont, Array(symbol.utf16), &glyphs, glyphs.count) && glyphs[0] != 0
+    }
+
     /// How much text the last restyle covered, for checking edits stay local.
     private(set) var lastRestyledLength = 0
     private(set) var lastRestyledRange = NSRange()
@@ -149,6 +159,12 @@ final class EditorStyler {
                 storage.addAttribute(.foregroundColor, value: theme.accent, range: range)
             }
         } else {
+            for substitution in map.substitutions where substitution.range.length == 1 && storage.touches(substitution.range) {
+                // Theme fonts may not have the hollow or square bullets, so the first font that does draws it.
+                if !Self.has(substitution.glyph, in: baseFont), let font = Self.font(drawing: substitution.glyph, size: baseFont.pointSize) {
+                    storage.addAttribute(.font, value: font, range: substitution.range)
+                }
+            }
             for substitution in map.substitutions where substitution.range.length > 1 && storage.touches(substitution.range) {
                 let size = baseFont.pointSize
                 let font = NSFont(name: "Apple Symbols", size: size * 1.15) ?? baseFont

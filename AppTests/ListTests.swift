@@ -79,4 +79,30 @@ final class ListTests: XCTestCase {
         let text = "- parent\n  - child\n"
         XCTAssertEqual(makeEditor(text, caret: 0).string, text)
     }
+
+    func testSubBulletsAreDrawnHollowInEveryTheme() {
+        for theme in Theme.all {
+            let (_, editor) = EditorTextView.makeInScrollView()
+            editor.theme = theme
+            editor.load(text: "- a\n  - b\n    - c\n")
+            let layout = editor.hidingLayoutManager
+            for (index, symbol) in [(0, "•"), (6, "◦"), (14, "▪")] {
+                XCTAssertEqual(layout.substitutions[index].map(String.init), symbol, theme.name)
+                let font = editor.textStorage!.attribute(.font, at: index, effectiveRange: nil) as! NSFont
+                var glyph: CGGlyph = 0
+                let found = CTFontGetGlyphsForCharacters(font as CTFont, Array(symbol.utf16), &glyph, 1)
+                XCTAssertTrue(found && glyph != 0, "\(theme.name) \(font.fontName) can't draw \(symbol)")
+            }
+        }
+    }
+
+    func testTabOnANewItemMakesAVisibleSubBullet() {
+        let editor = makeEditor("- a", caret: 3)
+        editor.insertNewline(nil)
+        editor.insertTab(nil)
+        XCTAssertEqual(editor.string, "- a\n  - ")
+        XCTAssertEqual(editor.hidingLayoutManager.substitutions[6].map(String.init), "◦")
+        let heading = editor.styler.map.spans.contains { if case .heading = $0.kind { return true } else { return false } }
+        XCTAssertFalse(heading, "the item above must not turn into a heading")
+    }
 }
