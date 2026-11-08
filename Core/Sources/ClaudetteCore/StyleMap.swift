@@ -48,6 +48,26 @@ public struct TaskBox: Equatable, Sendable {
     public var owner: NSRange
 }
 
+/// An image. A block image is alone on its line, and the formatted view shows the picture.
+public struct ImageInfo: Equatable, Sendable {
+    public var range: NSRange
+    public var source: String
+    public var alt: String
+    public var isBlock: Bool
+}
+
+public enum CalloutKind: String, Equatable, Sendable, CaseIterable {
+    case note, tip, important, warning, caution
+}
+
+/// A quote that starts with a marker like `[!NOTE]`. `title` is any text after the marker.
+public struct Callout: Equatable, Sendable {
+    public var range: NSRange
+    public var kind: CalloutKind
+    public var marker: NSRange
+    public var title: NSRange?
+}
+
 /// A code block. `contentRange` is the code without its fences.
 public struct CodeBlockInfo: Equatable, Sendable {
     public var range: NSRange
@@ -67,6 +87,21 @@ public struct StyleMap: Equatable, Sendable {
     /// Newlines that end a paragraph because a blank line follows. The formatted view hides
     /// them, and the blank line after, and shows a gap in their place.
     public var paragraphBreaks: [NSRange] = []
+    public var images: [ImageInfo] = []
+    public var callouts: [Callout] = []
+
+    /// Adds another map's results. Every field is listed here, so a new one can't be missed.
+    mutating func merge(_ other: StyleMap) {
+        spans += other.spans
+        hidden += other.hidden
+        substitutions += other.substitutions
+        taskBoxes += other.taskBoxes
+        tables += other.tables
+        codeBlocks += other.codeBlocks
+        paragraphBreaks += other.paragraphBreaks
+        images += other.images
+        callouts += other.callouts
+    }
 
     public init() {}
 }

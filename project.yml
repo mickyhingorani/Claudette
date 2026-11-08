@@ -30,6 +30,10 @@ targets:
         CFBundleDisplayName: Claudette
         LSApplicationCategoryType: public.app-category.productivity
         NSHumanReadableCopyright: ""
+        # Pictures linked with plain http:// would otherwise be blocked. Fetching
+        # pictures is the only network use.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
   ClaudetteTests:
     type: bundle.unit-test
     platform: macOS

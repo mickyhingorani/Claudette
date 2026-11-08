@@ -12,6 +12,39 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     var onDropURLs: (([URL]) -> Void)?
     private(set) var tableOverlays: [TableOverlayView] = []
 
+    override var isEditable: Bool {
+        didSet {
+            tableOverlays.forEach { $0.isEditable = isEditable }
+            if !isEditable { tableOverlays.forEach { $0.discardEditing() } }
+        }
+    }
+    private(set) var imageOverlays: [ImageOverlayView] = []
+    /// A fixed side margin, for small previews like the Markdown guide's. Nil centers a reading column.
+    var sideInset: CGFloat?
+    /// The folder of the open file, for image paths written relative to it.
+    var documentFolder: URL?
+
+    /// Opens Markdown files linked from the document.
+    var onOpenDocument: ((URL) -> Void)?
+    /// Told about a link Claudette won't open, such as a script or another app.
+    var onRefusedLink: ((String) -> Void)?
+    var openExternally: (URL) -> Void = { NSWorkspace.shared.open($0) }
+
+    /// ⌘-click on a link: web and email links open outside, Markdown files open here,
+    /// and anything else, like an app or a script, is refused.
+    func followLink(_ link: String) {
+        switch LinkTarget.resolve(link, relativeTo: documentFolder) {
+        case .external(let url): openExternally(url)
+        case .document(let url): onOpenDocument?(url)
+        case .none: break
+        case .refused: onRefusedLink?(link)
+        }
+    }
+    var imageLoader = ImageLoader.shared {
+        didSet { observeImageLoader() }
+    }
+    private var imageObserver: NSObjectProtocol?
+
     var hidingLayoutManager: HidingLayoutManager { layoutManager as! HidingLayoutManager }
 
     var viewMode: ViewMode {
@@ -90,6 +123,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         hidingLayoutManager.chipBackground = theme.chip
         hidingLayoutManager.ruleColor = theme.line
         hidingLayoutManager.quoteBarColor = theme.palette.quoteBar
+        hidingLayoutManager.palette = theme.palette
+        hidingLayoutManager.pageBackground = theme.background
         hidingLayoutManager.underlineColor = theme.palette.link
         hidingLayoutManager.strikeColor = theme.soft
     }
@@ -140,14 +175,16 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     func load(text: String) {
         guard let storage = textStorage else { return }
         tableOverlays.forEach { $0.discardEditing() }
+        styler.forgetGuessedLanguages()
         documentUndo.disableUndoRegistration()
         storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: text)
         documentUndo.enableUndoRegistration()
         documentUndo.removeAllActions()
         setSelectedRange(NSRange(location: 0, length: 0))
         isFreshlyLoaded = true
+        syncImages(invalidate: true)
         refreshDisplay()
-        positionTableOverlays()
+        positionOverlays()
     }
 
     func restyle() {
@@ -158,15 +195,16 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         storage.endEditing()
         typingAttributes = styler.typingAttributes
         syncTables(invalidate: true)
+        syncImages(invalidate: true)
         refreshDisplay()
-        positionTableOverlays()
+        positionOverlays()
         needsDisplay = true
     }
 
     private func refreshDisplay(invalidate: Bool = true) {
         let selection = isFreshlyLoaded ? NSRange(location: NSNotFound, length: 0) : selectedRange()
         let display = styler.display(selection: selection)
-        hidingLayoutManager.decorations = styler.decorations
+        hidingLayoutManager.decorations = styler.decorations(selection: selection)
         hidingLayoutManager.emptyLineFont = styler.emptyLineFont
         hidingLayoutManager.paragraphGap = styler.paragraphGap
         hidingLayoutManager.setDisplay(hidden: display.hidden, substitutions: display.substitutions, invalidate: invalidate)
@@ -175,9 +213,10 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorageEditActions,
                      range editedRange: NSRange, changeInLength delta: Int) {
         guard editedMask.contains(.editedCharacters) else { return }
-        styler.rescan(textStorage.string)
-        styler.apply(to: textStorage)
+        let region = styler.rescan(textStorage.string, edited: editedRange, delta: delta)
+        styler.apply(to: textStorage, in: region)
         syncTables(invalidate: false)
+        syncImages(invalidate: false)
         refreshDisplay(invalidate: false)
     }
 
@@ -200,6 +239,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
                 tableOverlays[index].update(table: table, theme: theme, width: tableWidth)
             } else {
                 let overlay = TableOverlayView(table: table, theme: theme, width: tableWidth)
+                overlay.isEditable = isEditable
                 overlay.onEdits = { [weak self] edits in self?.applyEdits(edits) }
                 overlay.onDraftChange = { [weak self] in
                     guard let self else { return }
@@ -213,8 +253,67 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
                 tableOverlays.append(overlay)
             }
         }
-        let reserved = zip(tables, tableOverlays).map { (range: $0.range, height: $1.gridSize.height) }
-        hidingLayoutManager.setReservedTables(reserved, invalidate: invalidate)
+        let reserved = zip(tables, tableOverlays).map { HidingLayoutManager.ReservedBlock(range: $0.range, height: $1.gridSize.height) }
+        hidingLayoutManager.setReserved(reserved, for: .table, invalidate: invalidate)
+    }
+
+    // MARK: Images
+
+    private func observeImageLoader() {
+        if let imageObserver { NotificationCenter.default.removeObserver(imageObserver) }
+        imageObserver = NotificationCenter.default.addObserver(forName: ImageLoader.didLoad, object: imageLoader, queue: nil) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.textStorage != nil else { return }
+                self.syncImages(invalidate: true)
+                self.positionOverlays()
+            }
+        }
+    }
+
+    /// Matches picture views to the block images in the text.
+    private func syncImages(invalidate: Bool) {
+        if imageObserver == nil { observeImageLoader() }
+        let images = viewMode == .formatted ? styler.map.images.filter(\.isBlock) : []
+        while imageOverlays.count > images.count {
+            imageOverlays.removeLast().removeFromSuperview()
+        }
+        for (index, info) in images.enumerated() {
+            var picture: NSImage?
+            if let url = ImageLoader.url(for: info.source, relativeTo: documentFolder),
+               case .loaded(let image) = imageLoader.state(for: url, startLoading: invalidate) {
+                picture = image
+            }
+            if index < imageOverlays.count {
+                imageOverlays[index].update(info: info, image: picture, theme: theme)
+            } else {
+                let overlay = ImageOverlayView(info: info, image: picture, theme: theme)
+                addSubview(overlay)
+                imageOverlays.append(overlay)
+            }
+            let overlay = imageOverlays[index]
+            overlay.onClick = { [weak self, weak overlay] in
+                guard let self, let overlay else { return }
+                self.window?.makeFirstResponder(self)
+                self.setSelectedRange(NSRange(location: NSMaxRange(overlay.info.range), length: 0))
+            }
+        }
+        let reserved = imageOverlays.map { HidingLayoutManager.ReservedBlock(range: $0.info.range, height: $0.displaySize(maxWidth: tableWidth).height) }
+        hidingLayoutManager.setReserved(reserved, for: .image, invalidate: invalidate)
+        // While typing, web pictures wait until the address stops changing.
+        if !invalidate, !images.isEmpty { scheduleImageLoading() }
+    }
+
+    private var imageLoadTimer: Timer?
+
+    private func scheduleImageLoading() {
+        imageLoadTimer?.invalidate()
+        imageLoadTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.textStorage != nil else { return }
+                self.syncImages(invalidate: true)
+                self.positionOverlays()
+            }
+        }
     }
 
     func commitCellEdits() {
@@ -232,20 +331,24 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         return text as String
     }
 
-    func positionTableOverlays() {
-        guard let layout = layoutManager, let storage = textStorage else { return }
-        for overlay in tableOverlays where NSMaxRange(overlay.table.range) <= storage.length {
-            let glyph = layout.glyphIndexForCharacter(at: overlay.table.range.location)
-            let rect = layout.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
-            let padding = textContainer?.lineFragmentPadding ?? 0
-            let frame = NSRect(x: rect.minX + textContainerOrigin.x + padding, y: rect.minY + textContainerOrigin.y + hidingLayoutManager.tableOffset(at: overlay.table.range.location),
-                               width: overlay.gridSize.width, height: overlay.gridSize.height)
-            if overlay.frame != frame { overlay.frame = frame }
-        }
+    func positionOverlays() {
+        for overlay in tableOverlays { place(overlay, over: overlay.table.range, size: overlay.gridSize) }
+        for overlay in imageOverlays { place(overlay, over: overlay.info.range, size: overlay.displaySize(maxWidth: tableWidth)) }
+    }
+
+    /// Puts a table or picture in the space reserved for it below its hidden source.
+    private func place(_ view: NSView, over range: NSRange, size: NSSize) {
+        guard let layout = layoutManager, let storage = textStorage, range.length > 0, NSMaxRange(range) <= storage.length else { return }
+        let rect = layout.lineFragmentRect(forGlyphAt: layout.glyphIndexForCharacter(at: NSMaxRange(range) - 1), effectiveRange: nil)
+        let padding = textContainer?.lineFragmentPadding ?? 0
+        let frame = NSRect(x: rect.minX + textContainerOrigin.x + padding,
+                           y: rect.minY + textContainerOrigin.y + hidingLayoutManager.blockOffset(at: range.location),
+                           width: size.width, height: size.height)
+        if view.frame != frame { view.frame = frame }
     }
 
     override func viewWillDraw() {
-        positionTableOverlays()
+        positionOverlays()
         super.viewWillDraw()
     }
 
@@ -306,15 +409,55 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         return !isBlank && !inCode && !inList
     }
 
+    // MARK: Lists
+
+    /// Applies a list edit as one undoable step, unless the caret is in code. True if it did.
+    private func applyListEdit(_ result: (edits: [TextEdit], selection: NSRange)?) -> Bool {
+        guard isEditable, let result else { return false }
+        let location = selectedRange().location
+        let inCode = styler.map.codeBlocks.contains { NSLocationInRange(location, $0.range) || location == NSMaxRange($0.range) }
+        guard !inCode else { return false }
+        applyEdits(result.edits)
+        setSelectedRange(result.selection)
+        return true
+    }
+
+    /// Tab on a list item nests it a level.
+    override func insertTab(_ sender: Any?) {
+        if applyListEdit(ListEditing.indentEdits(in: string, selection: selectedRange(), outdent: false)) { return }
+        super.insertTab(sender)
+    }
+
+    /// Shift-Tab on a list item brings it back out a level.
+    override func insertBacktab(_ sender: Any?) {
+        if applyListEdit(ListEditing.indentEdits(in: string, selection: selectedRange(), outdent: true)) { return }
+        super.insertBacktab(sender)
+    }
+
     /// Shift-Return: a line break inside the paragraph.
     override func insertLineBreak(_ sender: Any?) {
         insertText(lineEnding, replacementRange: selectedRange())
     }
 
+    /// Whether the line at `location` starts with Markdown that only works at a line's start.
+    private func startsBlock(at location: Int) -> Bool {
+        let ns = string as NSString
+        guard location < ns.length else { return false }
+        let line = ns.substring(with: ns.lineRange(for: NSRange(location: location, length: 0)))
+        let text = line.drop { $0 == " " }
+        if let first = text.first, "-*+".contains(first), text.dropFirst().first == " " { return true }
+        if [">", "#", "|"].contains(where: { text.hasPrefix($0) }) || text.hasPrefix("```") || text.hasPrefix("~~~") { return true }
+        let digits = text.prefix { $0.isNumber }
+        if !digits.isEmpty, let mark = text.dropFirst(digits.count).first, ".)".contains(mark) { return true }
+        return false
+    }
+
     override func deleteForward(_ sender: Any?) {
         let selection = selectedRange()
         if selection.length == 0, let item = paragraphBreaks.first(where: { $0.range.location == selection.location }) {
-            applyEdit(NSRange(location: item.range.location, length: item.nextParagraph - item.range.location), "")
+            let keepsMarker = startsBlock(at: item.nextParagraph)
+            let start = keepsMarker ? NSMaxRange(item.range) : item.range.location
+            applyEdit(NSRange(location: start, length: item.nextParagraph - start), "")
             setSelectedRange(NSRange(location: item.range.location, length: 0))
             return
         }
@@ -360,12 +503,18 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     }
 
     override func setFrameSize(_ newSize: NSSize) {
+        // The view also grows taller as text is typed; only a new width changes what fits.
+        let widthChanged = newSize.width != frame.width
         super.setFrameSize(newSize)
-        let side = max(28, (newSize.width - Self.columnWidth) / 2)
-        if textContainerInset.width != side {
-            textContainerInset = NSSize(width: side, height: 14)
+        let side = sideInset ?? max(28, (newSize.width - Self.columnWidth) / 2)
+        let inset = NSSize(width: side, height: sideInset == nil ? 14 : 0)
+        if textContainerInset != inset {
+            textContainerInset = inset
         }
-        if textStorage != nil, layoutManager != nil { syncTables(invalidate: true) }
+        if widthChanged, textStorage != nil, layoutManager != nil {
+            syncTables(invalidate: true)
+            syncImages(invalidate: true)
+        }
     }
 
     // MARK: Editing commands
@@ -387,10 +536,17 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     /// Backspace at the start of a heading removes its hidden mark, making it plain text.
     override func deleteBackward(_ sender: Any?) {
         let selection = selectedRange()
-        // At the start of a paragraph, joins it to the one before.
+        // At the start of a paragraph, joins it to the one before. A list item, quote or other
+        // block would lose its marker that way, so for those only the blank line goes.
         if selection.length == 0, let item = paragraphBreaks.first(where: { $0.nextParagraph == selection.location }) {
-            applyEdit(NSRange(location: item.range.location, length: item.nextParagraph - item.range.location), "")
-            setSelectedRange(NSRange(location: item.range.location, length: 0))
+            if startsBlock(at: item.nextParagraph) {
+                let blank = NSRange(location: NSMaxRange(item.range), length: item.nextParagraph - NSMaxRange(item.range))
+                applyEdit(blank, "")
+                setSelectedRange(NSRange(location: blank.location, length: 0))
+            } else {
+                applyEdit(NSRange(location: item.range.location, length: item.nextParagraph - item.range.location), "")
+                setSelectedRange(NSRange(location: item.range.location, length: 0))
+            }
             return
         }
         guard selection.length == 0, let mark = hiddenHeadingMarks.first(where: { NSMaxRange($0) == selection.location }) else {
@@ -403,6 +559,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
 
     /// Return at the end of an opening fence with no closing one adds the closing fence below.
     override func insertNewline(_ sender: Any?) {
+        if applyListEdit(ListEditing.returnEdits(in: string, selection: selectedRange())) { return }
         guard let fence = fenceToClose() else {
             if startsParagraphOnReturn {
                 insertText(lineEnding + lineEnding, replacementRange: selectedRange())
@@ -447,6 +604,16 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         } else {
             super.insertText(text, replacementRange: replacementRange)
         }
+    }
+
+    /// Inserts a Markdown guide example, then selects its sample text to type over.
+    func insertGuideEntry(_ entry: GuideEntry) {
+        guard isEditable else { return }
+        commitCellEdits()
+        let result = MarkdownGuide.insertion(of: entry, in: string, selection: selectedRange())
+        guard applyEdit(result.edit.range, result.edit.replacement) else { return }
+        setSelectedRange(result.selection)
+        scrollRangeToVisible(result.selection)
     }
 
     @discardableResult
@@ -528,9 +695,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         let point = convert(event.locationInWindow, from: nil)
         if let index = characterIndex(at: point), let storage = textStorage, index < storage.length {
             if event.modifierFlags.contains(.command),
-               let value = storage.attribute(.claudetteURL, at: index, effectiveRange: nil) as? String,
-               let url = URL(string: value) {
-                NSWorkspace.shared.open(url)
+               let value = storage.attribute(.claudetteURL, at: index, effectiveRange: nil) as? String {
+                followLink(value)
                 return
             }
             if viewMode == .formatted, hidingLayoutManager.substitutions[index] != nil,

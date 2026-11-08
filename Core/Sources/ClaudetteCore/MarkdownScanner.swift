@@ -20,9 +20,26 @@ public enum MarkdownScanner {
                 + ns.substring(from: frontmatter.endOfLastLine)
         }
         var walker = Walker(ns: ns, lines: LineIndex(source), map: map)
-        walker.visit(Document(parsing: parseText))
+        walker.visit(Document(parsing: fillingEmptyListItems(parseText)))
         walker.map.paragraphBreaks = paragraphBreaks(in: ns, map: walker.map)
         return walker.map.sorted().shifted(by: base)
+    }
+
+    /// A list marker with nothing after it, like the one Return or Tab just made, isn't a list
+    /// item to the parser when it follows text: an empty item can't start a list there, and a
+    /// lone "-" reads as a heading underline. For reading only, such lines get an invisible
+    /// character after the marker. It sits at the end of its line, so no position before it moves.
+    private static let emptyItem = try! NSRegularExpression(pattern: "^[ \\t]*(?:[-*+]|[0-9]{1,9}[.)]) +(?=\\r?$)", options: [.anchorsMatchLines])
+
+    static func fillingEmptyListItems(_ text: String) -> String {
+        let ns = text as NSString
+        let matches = emptyItem.matches(in: text, range: NSRange(location: 0, length: ns.length))
+        guard !matches.isEmpty else { return text }
+        let filled = NSMutableString(string: text)
+        for match in matches.reversed() {
+            filled.insert("\u{2060}", at: NSMaxRange(match.range))
+        }
+        return filled as String
     }
 
     /// The newline ending each line of text that's followed by a blank line, outside code and frontmatter.
@@ -76,6 +93,8 @@ private struct Walker: MarkupWalker {
     let lines: LineIndex
     var map: StyleMap
     var quoteDepth = 0
+    /// How many lists the current item sits inside, counting its own.
+    var listDepth = 0
 
     private func nsRange(_ markup: Markup) -> NSRange? {
         guard let range = markup.range else { return nil }
@@ -149,8 +168,21 @@ private struct Walker: MarkupWalker {
                 let length = min(hashes + spaces, range.length)
                 hide(NSRange(location: range.location, length: length), owner: range, kind: .headingMark)
             }
+            if hashes == 0 { hideSetextUnderline(of: range) }
         }
         descendInto(heading)
+    }
+
+    /// A heading written as a line of text underlined with === or ---: the underline,
+    /// with the line break before it, shows only while the caret is in the heading.
+    private mutating func hideSetextUnderline(of range: NSRange) {
+        let lastLine = ns.lineRange(for: NSRange(location: NSMaxRange(range) - 1, length: 0))
+        guard lastLine.location > range.location else { return }
+        let underline = ns.substring(with: lastLine).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let mark = underline.first, mark == "=" || mark == "-", underline.allSatisfy({ $0 == mark }) else { return }
+        var start = lastLine.location - 1
+        if start > range.location, ns.character(at: start) == 0x0A, ns.character(at: start - 1) == 0x0D { start -= 1 }
+        hide(NSRange(location: start, length: NSMaxRange(range) - start), owner: range)
     }
 
     mutating func visitLink(_ link: Link) {
@@ -182,9 +214,15 @@ private struct Walker: MarkupWalker {
     }
 
     mutating func visitImage(_ image: Image) {
-        if let range = nsRange(image) {
-            map.spans.append(StyledSpan(range: range, kind: .image))
-        }
+        guard let range = nsRange(image) else { return }
+        map.spans.append(StyledSpan(range: range, kind: .image))
+        let line = ns.lineRange(for: NSRange(location: range.location, length: 0))
+        let before = ns.substring(with: NSRange(location: line.location, length: range.location - line.location))
+        let after = ns.substring(with: NSRange(location: NSMaxRange(range), length: NSMaxRange(line) - NSMaxRange(range)))
+        let isBlock = before.allSatisfy(\.isWhitespace) && after.allSatisfy(\.isWhitespace) && quoteDepth == 0
+        let alt = image.children.compactMap { ($0 as? Text)?.string }.joined()
+        map.images.append(ImageInfo(range: range, source: image.source ?? "", alt: alt, isBlock: isBlock))
+        if isBlock { hide(range, owner: range) }
     }
 
     mutating func visitThematicBreak(_ thematicBreak: ThematicBreak) {
@@ -232,6 +270,27 @@ private struct Walker: MarkupWalker {
         return nil
     }
 
+    mutating func visitUnorderedList(_ list: UnorderedList) {
+        listDepth += 1
+        descendInto(list)
+        listDepth -= 1
+    }
+
+    mutating func visitOrderedList(_ list: OrderedList) {
+        listDepth += 1
+        descendInto(list)
+        listDepth -= 1
+    }
+
+    /// A solid bullet at the top level, hollow one level in, and a small square deeper.
+    private var bulletGlyph: String {
+        switch listDepth {
+        case ...1: return "•"
+        case 2: return "◦"
+        default: return "▪"
+        }
+    }
+
     mutating func visitListItem(_ listItem: ListItem) {
         if let range = nsRange(listItem) {
             scanMarker(of: listItem, in: range)
@@ -268,21 +327,45 @@ private struct Walker: MarkupWalker {
         let marker = NSRange(location: start, length: markerLength)
         map.spans.append(StyledSpan(range: marker, kind: .listItem))
         if isBullet {
-            map.substitutions.append(Substitution(range: marker, glyph: "•", owner: marker))
+            map.substitutions.append(Substitution(range: marker, glyph: bulletGlyph, owner: marker))
         }
     }
 
     mutating func visitBlockQuote(_ blockQuote: BlockQuote) {
         if quoteDepth == 0, let range = nsRange(blockQuote) {
             map.spans.append(StyledSpan(range: range, kind: .blockquote))
-            hideQuotePrefixes(in: range)
+            let firstContent = hideQuotePrefixes(in: range)
+            scanCallout(in: range, contentStart: firstContent)
         }
         quoteDepth += 1
         descendInto(blockQuote)
         quoteDepth -= 1
     }
 
-    private mutating func hideQuotePrefixes(in range: NSRange) {
+    /// A quote whose first line starts with `[!NOTE]` or another kind becomes a callout.
+    private mutating func scanCallout(in range: NSRange, contentStart: Int) {
+        let line = ns.lineRange(for: NSRange(location: range.location, length: 0))
+        var contentEnd = NSMaxRange(line)
+        while contentEnd > contentStart, isNewline(ns.character(at: contentEnd - 1)) { contentEnd -= 1 }
+        let content = ns.substring(with: NSRange(location: contentStart, length: contentEnd - contentStart))
+        guard content.hasPrefix("[!"), let close = content.firstIndex(of: "]") else { return }
+        let name = content[content.index(content.startIndex, offsetBy: 2)..<close].lowercased()
+        guard let kind = CalloutKind(rawValue: name) else { return }
+        let markerLength = (String(content[...close]) as NSString).length
+        let rest = String(content[content.index(after: close)...])
+        let spaces = (String(rest.prefix { $0 == " " }) as NSString).length
+        let titleText = rest.trimmingCharacters(in: .whitespaces)
+        let titleStart = contentStart + markerLength + spaces
+        let title = titleText.isEmpty ? nil : NSRange(location: titleStart, length: (titleText as NSString).length)
+        let marker = NSRange(location: contentStart, length: title == nil ? markerLength : markerLength + spaces)
+        hide(marker, owner: NSRange(location: line.location, length: contentEnd - line.location))
+        map.callouts.append(Callout(range: range, kind: kind, marker: marker, title: title))
+    }
+
+    /// Hides each line's `>` prefix, and returns where the first line's text starts.
+    @discardableResult
+    private mutating func hideQuotePrefixes(in range: NSRange) -> Int {
+        var firstContent: Int?
         var lineStart = range.location
         while lineStart < NSMaxRange(range) {
             let line = ns.lineRange(for: NSRange(location: lineStart, length: 0))
@@ -299,8 +382,10 @@ private struct Walker: MarkupWalker {
             while contentEnd > line.location, isNewline(ns.character(at: contentEnd - 1)) { contentEnd -= 1 }
             let owner = NSRange(location: lineStart, length: contentEnd - lineStart)
             hide(NSRange(location: lineStart, length: prefixEnd - lineStart), owner: owner)
+            if firstContent == nil { firstContent = prefixEnd }
             lineStart = NSMaxRange(line)
         }
+        return firstContent ?? range.location
     }
 
     mutating func visitTable(_ table: Markdown.Table) {
@@ -311,11 +396,7 @@ private struct Walker: MarkupWalker {
         let leadLength = block.range.location - range.location
         if leadLength > 0 {
             let lead = NSRange(location: range.location, length: leadLength)
-            let above = MarkdownScanner.scan(ns.substring(with: lead)).shifted(by: lead.location)
-            map.spans += above.spans
-            map.hidden += above.hidden
-            map.substitutions += above.substitutions
-            map.taskBoxes += above.taskBoxes
+            map.merge(MarkdownScanner.scan(ns.substring(with: lead)).shifted(by: lead.location))
         }
     }
 }
@@ -338,6 +419,8 @@ private extension StyleMap {
         map.taskBoxes = taskBoxes.map { TaskBox(range: shift($0.range), isChecked: $0.isChecked, owner: shift($0.owner)) }
         map.tables = tables.map { $0.shifted(by: base) }
         map.paragraphBreaks = paragraphBreaks.map(shift)
+        map.images = images.map { ImageInfo(range: shift($0.range), source: $0.source, alt: $0.alt, isBlock: $0.isBlock) }
+        map.callouts = callouts.map { Callout(range: shift($0.range), kind: $0.kind, marker: shift($0.marker), title: $0.title.map(shift)) }
         map.codeBlocks = codeBlocks.map {
             CodeBlockInfo(range: shift($0.range), contentRange: shift($0.contentRange), language: $0.language, isClosed: $0.isClosed)
         }

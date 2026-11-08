@@ -168,6 +168,24 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: source.path))
     }
 
+    func testImportingALinkCopiesTheFileItPointsTo() throws {
+        let project = try folder("Project")
+        let original = try write("hello", "Doc.md", in: try folder("Outside"))
+        let links = try folder("Links")
+        let link = links.appendingPathComponent("Linked.md")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: original)
+        let model = makeModel()
+        model.connect(project)
+        model.importFiles([link], into: project)
+        let copy = project.appendingPathComponent("Linked.md")
+        let type = try FileManager.default.attributesOfItem(atPath: copy.path)[.type] as? FileAttributeType
+        XCTAssertEqual(type, .typeRegular)
+        model.editor.insertText(" there", replacementRange: NSRange(location: 5, length: 0))
+        model.saveNow()
+        XCTAssertEqual(try read(original), "hello")
+        XCTAssertEqual(try read(copy), "hello there")
+    }
+
     func testImportIntoChosenFolder() throws {
         let project = try folder("Project")
         let source = try write("hello", "Doc.md", in: try folder("Outside"))
@@ -317,6 +335,94 @@ final class AppModelTests: XCTestCase {
         model.saveNow()
         XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
         XCTAssertNil(model.currentFile)
+    }
+
+    func testTrashingTheOpenFileKeepsItsLastTyping() throws {
+        let model = makeModel()
+        let file = try write("a", "a.md", in: starter)
+        model.refresh()
+        model.open(file)
+        type("b", into: model)
+        let trashed = try XCTUnwrap(model.trash(file))
+        defer { try? FileManager.default.removeItem(at: trashed) }
+        XCTAssertEqual(try String(contentsOf: trashed, encoding: .utf8), "ab")
+    }
+
+    func testFollowingALinkToAnotherNoteOpensIt() throws {
+        let model = makeModel()
+        let first = try write("[next](Second.md)", "First.md", in: starter)
+        let second = try write("two", "Second.md", in: starter)
+        model.refresh()
+        model.open(first)
+        model.editor.followLink("Second.md")
+        XCTAssertEqual(model.currentFile, second)
+    }
+
+    func testARefusedLinkSaysWhy() throws {
+        let model = makeModel()
+        model.editor.followLink("ssh://server")
+        XCTAssertNotNil(model.notice)
+    }
+
+    // MARK: Folder events
+
+    func testOwnSaveDoesNotRescanFolders() throws {
+        let model = makeModel()
+        let file = try write("a", "a.md", in: starter)
+        model.refresh()
+        model.open(file)
+        type("b", into: model)
+        model.saveNow()
+        let scans = model.scannedFolders.count
+        model.filesChanged(at: [file.path, starter.appendingPathComponent(".dat.nosync1a2b").path])
+        XCTAssertEqual(model.scannedFolders.count, scans)
+    }
+
+    func testNewNoteRescansOnlyItsFolder() throws {
+        let model = makeModel()
+        let other = try folder("Other")
+        model.connect(other)
+        let scans = model.scannedFolders.count
+        let note = try write("hi", "New.md", in: other)
+        model.filesChanged(at: [note.path])
+        XCTAssertEqual(Array(model.scannedFolders.dropFirst(scans)), [other])
+        XCTAssertTrue(model.allFiles.contains(note))
+        XCTAssertTrue(model.unseen.contains(note))
+    }
+
+    func testNonMarkdownChangesAreIgnored() throws {
+        let model = makeModel()
+        let scans = model.scannedFolders.count
+        let text = try write("x", "notes.txt", in: starter)
+        model.filesChanged(at: [text.path])
+        XCTAssertEqual(model.scannedFolders.count, scans)
+    }
+
+    func testNewSubfolderIsScanned() throws {
+        let model = makeModel()
+        let sub = starter.appendingPathComponent("Sub", isDirectory: true)
+        try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+        let note = try write("x", "In.md", in: sub)
+        model.filesChanged(at: [sub.path])
+        XCTAssertTrue(model.allFiles.contains(note))
+    }
+
+    func testRealPathOfALinkedFolderStillMatches() throws {
+        let model = makeModel()
+        let real = starter.resolvingSymlinksInPath()
+        let note = try write("x", "Real.md", in: starter)
+        model.filesChanged(at: [real.appendingPathComponent("Real.md").path])
+        XCTAssertTrue(model.allFiles.contains(note))
+    }
+
+    func testOpenFileChangedElsewhereStillReloads() throws {
+        let model = makeModel()
+        let file = try write("a", "a.md", in: starter)
+        model.refresh()
+        model.open(file)
+        try "changed".write(to: file, atomically: true, encoding: .utf8)
+        model.filesChanged(at: [file.path])
+        XCTAssertEqual(model.editor.string, "changed")
     }
 
     func testStateRestoredOnRelaunch() throws {

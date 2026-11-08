@@ -17,7 +17,7 @@ Minor items from the independent code review of the MVP, left for later.
 - Return in a CRLF file inserts a bare LF. Existing line endings are untouched.
 - `⌘I` on selected bold text turns `**bold**` into `*bold*`.
 - Backslash escapes like `\*` still show in the formatted view.
-- The whole document is re-read on every keystroke, so very large files may feel slow.
+- The whole document is re-read on every keystroke (about 13 ms at 43,000 characters in a release build), so very large files can still feel slow. Only the edited lines are restyled.
 - Backspace on the line right below a table merges that line into the table's last row. Undo restores it.
 
 ## Files
@@ -30,5 +30,7 @@ Minor items from the independent code review of the MVP, left for later.
 
 ## Look
 
-- No app icon yet.
+- An image in the middle of a sentence shows as its Markdown text, not as a picture.
+- Animated GIFs show only their first frame.
+
 - An inline code chip that wraps across two lines runs a little past its text on the first line.

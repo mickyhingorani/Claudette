@@ -37,9 +37,9 @@ private func hidden(_ text: String) -> [NSRange] {
         #expect(hidden("#").isEmpty)
     }
 
-    @Test func setextHeadingHidesNothing() {
+    @Test func setextHeadingHidesOnlyItsUnderline() {
         let map = MarkdownScanner.scan("Title\n===\n")
-        #expect(map.hidden.isEmpty)
+        #expect(map.hidden.map(\.range) == [r(5, 4)])
         #expect(map.spans.contains { $0.kind == .heading(level: 1) })
     }
 
@@ -142,10 +142,10 @@ private func hidden(_ text: String) -> [NSRange] {
         #expect(map.spans.contains(StyledSpan(range: r(3, 3), kind: .thematicBreak)))
     }
 
-    @Test func imageStaysAsDimmedSource() {
-        let map = MarkdownScanner.scan("![a](b.png)")
+    @Test func inlineImageStaysAsDimmedSource() {
+        let map = MarkdownScanner.scan("x ![a](b.png) y")
         #expect(map.hidden.isEmpty)
-        #expect(map.spans.contains(StyledSpan(range: r(0, 11), kind: .image)))
+        #expect(map.spans.contains(StyledSpan(range: r(2, 11), kind: .image)))
     }
 
     @Test func frontmatterDimmedNotParsed() {

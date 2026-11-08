@@ -53,7 +53,7 @@ final class RealPathTests: XCTestCase {
     private func open(_ model: AppModel, _ url: URL) {
         model.refresh()
         model.open(url)
-        model.editor.positionTableOverlays()
+        model.editor.positionOverlays()
     }
 
     private func typeInCell(_ overlay: TableOverlayView, _ text: String) throws {

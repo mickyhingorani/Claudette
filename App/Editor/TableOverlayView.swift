@@ -16,6 +16,8 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     private var field: NSTextField?
     var editingField: NSTextField? { field }
     private(set) var editingCell: (row: Int, column: Int)?
+    /// Off for a read-only file: cells don't open and the row and column menu doesn't appear.
+    var isEditable = true
 
     var onEdits: (([TextEdit]) -> Void)?
     var onFinishEditing: (() -> Void)?
@@ -196,6 +198,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     }
 
     func beginEditing(row: Int, column: Int) {
+        guard isEditable else { return }
         editingCell = (row, column)
         let field = NSTextField(string: table.cell(row: row, column: column).displayText)
         field.isBordered = false
@@ -315,6 +318,8 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     // MARK: Menu
 
     override func menu(for event: NSEvent) -> NSMenu? {
+        guard isEditable else { return nil }
+        let table = self.table
         // An open cell's position would go stale if a row or column changes under it.
         commitCurrentEdit()
         guard let target = cell(at: convert(event.locationInWindow, from: nil)) else { return nil }
@@ -323,11 +328,11 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
             let item = TableMenuItem(title: title, action: #selector(runMenuItem(_:)), keyEquivalent: "")
             item.target = self
             item.edits = edits
+            item.table = table
             item.isEnabled = enabled
             menu.addItem(item)
         }
         menu.autoenablesItems = false
-        let table = self.table
         add("Add Row Below") { TableEditor.addRow(table, after: target.row) }
         add("Delete Row", enabled: target.row > 0) { TableEditor.deleteRow(table, row: target.row) }
         menu.addItem(.separator())
@@ -337,10 +342,14 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     }
 
     @objc private func runMenuItem(_ item: TableMenuItem) {
+        // If the file changed while the menu was open, the action's positions are stale.
+        guard item.table == table else { return }
         if let edits = item.edits?(), !edits.isEmpty { onEdits?(edits) }
     }
 }
 
 private final class TableMenuItem: NSMenuItem {
     var edits: (() -> [TextEdit])?
+    /// The table as it was when the menu opened.
+    var table: TableBlock?
 }

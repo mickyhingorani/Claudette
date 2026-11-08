@@ -27,6 +27,17 @@ struct Palette: Equatable {
     let attribute: NSColor
     let type: NSColor
 
+    /// Each callout kind borrows a color the theme already uses for meaning.
+    func callout(_ kind: CalloutKind) -> NSColor {
+        switch kind {
+        case .note: return link
+        case .tip: return check
+        case .important: return emphasis
+        case .warning: return strong
+        case .caution: return inlineCode
+        }
+    }
+
     func color(for kind: CodeTokenKind) -> NSColor {
         switch kind {
         case .keyword: return keyword

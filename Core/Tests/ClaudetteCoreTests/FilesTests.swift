@@ -228,3 +228,17 @@ private func write(_ text: String, _ name: String, in folder: URL, age: TimeInte
         #expect(!FileManager.default.fileExists(atPath: file.path))
     }
 }
+
+@Suite struct FileNameLengthTests {
+    @Test func longEmojiTitleFitsTheFileNameLimit() {
+        let family = "👨‍👩‍👧‍👦"
+        let name = FileNaming.name(fromFirstLineOf: String(repeating: family, count: 60))
+        #expect(name.utf8.count <= 200)
+        #expect(!name.isEmpty)
+        #expect(name.allSatisfy { $0 == Character(family) })
+    }
+
+    @Test func ordinaryTitleIsUnchanged() {
+        #expect(FileNaming.name(fromFirstLineOf: "# Trip notes\nbody") == "Trip notes")
+    }
+}

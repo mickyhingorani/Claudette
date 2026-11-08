@@ -11,7 +11,7 @@ final class TableEditingTests: XCTestCase {
         let (_, editor) = EditorTextView.makeInScrollView()
         editor.setFrameSize(NSSize(width: width, height: 600))
         editor.load(text: text)
-        editor.positionTableOverlays()
+        editor.positionOverlays()
         return editor
     }
 
@@ -87,6 +87,50 @@ final class TableEditingTests: XCTestCase {
         editor.setSelectedRange(NSRange(location: tableStart + 3, length: 0))
         // Past the table and the hidden blank line before it, to the end of the paragraph above.
         XCTAssertEqual(editor.selectedRange().location, tableStart - 2)
+    }
+
+    func testReadOnlyFileOpensNoCells() throws {
+        let editor = makeEditor(text)
+        editor.isEditable = false
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        overlay.beginEditing(row: 1, column: 0)
+        XCTAssertNil(overlay.editingCell)
+        XCTAssertNil(overlay.menu(for: NSEvent()))
+    }
+
+    func testFileBecomingEditableOpensCellsAgain() throws {
+        let editor = makeEditor(text)
+        editor.isEditable = false
+        editor.isEditable = true
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        overlay.beginEditing(row: 1, column: 0)
+        XCTAssertNotNil(overlay.editingCell)
+    }
+
+    func testMenuActionDoesNothingIfTheFileReloadedWhileItWasOpen() throws {
+        let editor = makeEditor(text)
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        let center = NSPoint(x: overlay.columnWidths[0] / 2, y: overlay.gridSize.height - 5)
+        let click = try XCTUnwrap(NSEvent.mouseEvent(with: .rightMouseDown, location: overlay.convert(center, to: nil), modifierFlags: [],
+                                                     timestamp: 0, windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
+        let menu = try XCTUnwrap(overlay.menu(for: click))
+        let deleteRow = try XCTUnwrap(menu.items.first { $0.title == "Delete Row" })
+        let reloaded = "Changed outside\n\n| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |\n"
+        editor.load(text: reloaded)
+        NSApp.sendAction(deleteRow.action!, to: deleteRow.target, from: deleteRow)
+        XCTAssertEqual(editor.string, reloaded)
+    }
+
+    func testMenuActionStillWorksWhenNothingChanged() throws {
+        let editor = makeEditor(text)
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        let center = NSPoint(x: overlay.columnWidths[0] / 2, y: overlay.gridSize.height - 5)
+        let click = try XCTUnwrap(NSEvent.mouseEvent(with: .rightMouseDown, location: overlay.convert(center, to: nil), modifierFlags: [],
+                                                     timestamp: 0, windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
+        let menu = try XCTUnwrap(overlay.menu(for: click))
+        let deleteRow = try XCTUnwrap(menu.items.first { $0.title == "Delete Row" })
+        NSApp.sendAction(deleteRow.action!, to: deleteRow.target, from: deleteRow)
+        XCTAssertFalse(editor.string.contains("| 1 | 2 |"))
     }
 
     func testCellEditChangesOnlyThatCell() throws {
@@ -167,7 +211,7 @@ final class TableEditingTests: XCTestCase {
         scroll.frame = NSRect(x: 0, y: 0, width: 800, height: 600)
         editor.setFrameSize(NSSize(width: 800, height: 600))
         editor.load(text: text)
-        editor.positionTableOverlays()
+        editor.positionOverlays()
         window.makeFirstResponder(editor)
         return (window, editor)
     }

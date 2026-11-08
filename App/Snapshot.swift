@@ -22,11 +22,16 @@ enum Snapshot {
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless], backing: .buffered, defer: false)
         window.contentView = scroll
         scroll.frame = NSRect(origin: .zero, size: size)
+        editor.documentFolder = URL(fileURLWithPath: file).deletingLastPathComponent()
         editor.load(text: text)
         let cursor = defaults.object(forKey: "snapshotCursor") == nil ? (text as NSString).length : defaults.integer(forKey: "snapshotCursor")
         editor.setSelectedRange(NSRange(location: cursor, length: 0))
+        let deadline = Date().addingTimeInterval(10)
+        while MainActor.assumeIsolated({ editor.imageLoader.isLoading }), Date() < deadline {
+            RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+        }
         window.layoutIfNeeded()
-        editor.positionTableOverlays()
+        editor.positionOverlays()
         write(scroll, to: out)
         exit(0)
     }
@@ -40,14 +45,16 @@ enum Snapshot {
         store.set(defaults.string(forKey: "snapshotMode") ?? "formatted", forKey: "viewMode")
         let model = AppModel(defaults: store, starterFolder: URL(fileURLWithPath: folder), watchesFolders: false)
         model.isFileListOpen = defaults.bool(forKey: "snapshotList")
-        let size = NSSize(width: 980, height: 760)
+        model.isGuideOpen = defaults.bool(forKey: "snapshotGuide")
+        let height = defaults.object(forKey: "snapshotHeight") == nil ? 760 : defaults.integer(forKey: "snapshotHeight")
+        let size = NSSize(width: 980, height: CGFloat(height))
         let host = NSHostingView(rootView: RootView(model: model))
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless], backing: .buffered, defer: false)
         window.contentView = host
         host.frame = NSRect(origin: .zero, size: size)
         window.orderBack(nil)
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.6))
-        model.editor.positionTableOverlays()
+        model.editor.positionOverlays()
         write(host, to: out)
     }
 
