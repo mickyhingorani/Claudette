@@ -19,6 +19,71 @@ final class EditorStyler {
     func rescan(_ text: String) {
         map = MarkdownScanner.scan(text)
         hiddenByOwner = Dictionary(grouping: map.hidden, by: \.owner)
+        styleItems = Self.styleItems(of: map)
+    }
+
+    /// Rescans after an edit, and returns the part of the text whose styling may have changed:
+    /// the edited lines, plus anything the scan now reads differently, like a code block
+    /// that a new fence opened. `edited` is in the new text; `delta` is the change in length.
+    func rescan(_ text: String, edited: NSRange, delta: Int) -> NSRange {
+        let before = styleItems
+        rescan(text)
+        let oldEnd = NSMaxRange(edited) - delta
+        func shifted(_ position: Int) -> Int {
+            if position <= edited.location { return position }
+            if position >= oldEnd { return position + delta }
+            return NSMaxRange(edited)
+        }
+        // Guessed languages are kept by where each block starts, so they move with the text.
+        var guesses: [Int: String] = [:]
+        for (start, language) in guessedLanguages {
+            if start < edited.location { guesses[start] = language } else if start >= oldEnd { guesses[start + delta] = language }
+        }
+        guessedLanguages = guesses
+        let moved = Set(before.map { item in
+            let start = shifted(item.range.location)
+            return StyleItem(range: NSRange(location: start, length: max(0, shifted(NSMaxRange(item.range)) - start)), tag: item.tag)
+        })
+        let now = Set(styleItems)
+        var dirty = edited
+        for item in moved.symmetricDifference(now) {
+            dirty = NSUnionRange(dirty, item.range)
+        }
+        // Code colors depend on everything before them in a block: one quote mark can make
+        // the rest of it a string. So an edit in a code block restyles the whole block.
+        for block in map.codeBlocks where NSIntersectionRange(block.range, dirty).length > 0 || NSLocationInRange(edited.location, block.range) {
+            dirty = NSUnionRange(dirty, block.range)
+        }
+        let ns = text as NSString
+        let start = ns.lineRange(for: NSRange(location: min(dirty.location, ns.length), length: 0)).location
+        let end = NSMaxRange(ns.lineRange(for: NSRange(location: min(NSMaxRange(dirty), ns.length), length: 0)))
+        return NSRange(location: start, length: end - start)
+    }
+
+    /// Everything from a scan that sets attributes, as plain ranges and labels to compare.
+    private struct StyleItem: Hashable {
+        var range: NSRange
+        var tag: String
+    }
+
+    private var styleItems: [StyleItem] = []
+
+    private static func styleItems(of map: StyleMap) -> [StyleItem] {
+        var items: [StyleItem] = []
+        items.reserveCapacity(map.spans.count + map.hidden.count + map.substitutions.count)
+        for span in map.spans { items.append(StyleItem(range: span.range, tag: "span \(span.kind)")) }
+        for item in map.hidden { items.append(StyleItem(range: item.range, tag: "hidden")) }
+        for item in map.substitutions { items.append(StyleItem(range: item.range, tag: "sub \(item.glyph)")) }
+        for box in map.taskBoxes { items.append(StyleItem(range: box.owner, tag: "task \(box.isChecked)")) }
+        for block in map.codeBlocks {
+            items.append(StyleItem(range: block.range, tag: "code \(block.language ?? "") \(block.isClosed)"))
+            items.append(StyleItem(range: block.contentRange, tag: "code content"))
+        }
+        for callout in map.callouts {
+            items.append(StyleItem(range: callout.range, tag: "callout \(callout.kind)"))
+            if let title = callout.title { items.append(StyleItem(range: title, tag: "callout title")) }
+        }
+        return items
     }
 
     private var baseFont: NSFont { mode == .formatted ? theme.bodyFont : theme.monoFont }
@@ -38,16 +103,25 @@ final class EditorStyler {
         [.font: baseFont, .foregroundColor: theme.text, .paragraphStyle: baseParagraph]
     }
 
+    /// How much text the last restyle covered, for checking edits stay local.
+    private(set) var lastRestyledLength = 0
+    private(set) var lastRestyledRange = NSRange()
+
     /// Styles the text, changing only attributes that differ from what's there. Setting every
     /// attribute again would make the whole document lay out again on every keystroke.
-    func apply(to storage: NSTextStorage) {
-        let styled = NSMutableAttributedString(string: storage.string)
-        apply(toScratch: styled)
+    /// `region` limits the work to part of the text; nil styles all of it.
+    func apply(to storage: NSTextStorage, in region: NSRange? = nil) {
         let length = storage.length
-        var location = 0
-        while location < length {
+        let area = region.map { NSIntersectionRange($0, NSRange(location: 0, length: length)) } ?? NSRange(location: 0, length: length)
+        lastRestyledLength = area.length
+        lastRestyledRange = area
+        guard area.length > 0 else { return }
+        let styled = NSMutableAttributedString(string: storage.string)
+        apply(toScratch: StyledText(styled, region: area))
+        var location = area.location
+        while location < NSMaxRange(area) {
             var run = NSRange()
-            let wanted = styled.attributes(at: location, longestEffectiveRange: &run, in: NSRange(location: location, length: length - location))
+            let wanted = styled.attributes(at: location, longestEffectiveRange: &run, in: NSRange(location: location, length: NSMaxRange(area) - location))
             storage.enumerateAttributes(in: run) { current, part, _ in
                 if !(current as NSDictionary).isEqual(to: wanted) { storage.setAttributes(wanted, range: part) }
             }
@@ -57,21 +131,25 @@ final class EditorStyler {
 
     /// Styles text from scratch: every attribute is set.
     func apply(toScratch storage: NSMutableAttributedString) {
-        let all = NSRange(location: 0, length: storage.length)
+        apply(toScratch: StyledText(storage, region: NSRange(location: 0, length: storage.length)))
+    }
+
+    private func apply(toScratch storage: StyledText) {
+        let all = storage.region
         guard all.length > 0 else { return }
         storage.setAttributes(typingAttributes, range: all)
-        for span in map.spans {
+        for span in map.spans where storage.touches(span.range) {
             style(span, in: storage)
         }
         if mode == .formatted { dimCheckedTasks(in: storage) }
         colorCode(in: storage)
         keepOperatorsAsTyped(in: storage)
         if mode == .markdown {
-            for range in map.hidden.map(\.range) + map.substitutions.map(\.range) {
+            for range in map.hidden.map(\.range) + map.substitutions.map(\.range) where storage.touches(range) {
                 storage.addAttribute(.foregroundColor, value: theme.accent, range: range)
             }
         } else {
-            for substitution in map.substitutions where substitution.range.length > 1 {
+            for substitution in map.substitutions where substitution.range.length > 1 && storage.touches(substitution.range) {
                 let size = baseFont.pointSize
                 let font = NSFont(name: "Apple Symbols", size: size * 1.15) ?? baseFont
                 storage.addAttribute(.font, value: font, range: substitution.range)
@@ -80,7 +158,7 @@ final class EditorStyler {
         }
     }
 
-    private func style(_ span: StyledSpan, in storage: NSMutableAttributedString) {
+    private func style(_ span: StyledSpan, in storage: StyledText) {
         let range = span.range
         guard NSMaxRange(range) <= storage.length else { return }
         switch span.kind {
@@ -154,9 +232,9 @@ final class EditorStyler {
         }
     }
 
-    private func dimCheckedTasks(in storage: NSMutableAttributedString) {
+    private func dimCheckedTasks(in storage: StyledText) {
         let text = storage.string as NSString
-        for box in map.taskBoxes where box.isChecked && NSMaxRange(box.owner) <= text.length {
+        for box in map.taskBoxes where box.isChecked && NSMaxRange(box.owner) <= text.length && storage.touches(box.owner) {
             let line = text.lineRange(for: NSRange(location: box.owner.location, length: 0))
             var end = NSMaxRange(line)
             while end > NSMaxRange(box.owner), [0x0A, 0x0D].contains(text.character(at: end - 1)) { end -= 1 }
@@ -165,7 +243,7 @@ final class EditorStyler {
     }
 
     /// Callout text keeps the normal text color; its first line leaves room for the icon.
-    private func styleCallout(_ callout: Callout, in storage: NSMutableAttributedString) {
+    private func styleCallout(_ callout: Callout, in storage: StyledText) {
         let paragraph = baseParagraph
         paragraph.firstLineHeadIndent = HidingLayoutManager.quoteIndent
         paragraph.headIndent = HidingLayoutManager.quoteIndent
@@ -199,11 +277,11 @@ final class EditorStyler {
         guessedLanguages = [:]
     }
 
-    private func colorCode(in storage: NSMutableAttributedString) {
+    private func colorCode(in storage: StyledText) {
         let text = storage.string as NSString
         let starts = Set(map.codeBlocks.map(\.range.location))
         guessedLanguages = guessedLanguages.filter { starts.contains($0.key) }
-        for block in map.codeBlocks where NSMaxRange(block.contentRange) <= text.length {
+        for block in map.codeBlocks where NSMaxRange(block.contentRange) <= text.length && storage.touches(block.range) {
             let code = text.substring(with: block.contentRange)
             var language = block.language
             if language == nil {
@@ -219,8 +297,8 @@ final class EditorStyler {
     }
 
     /// Resizing or bolding a font drops its features, so coding fonts get theirs back here.
-    private func keepOperatorsAsTyped(in storage: NSMutableAttributedString) {
-        storage.enumerateAttribute(.font, in: NSRange(location: 0, length: storage.length)) { value, range, _ in
+    private func keepOperatorsAsTyped(in storage: StyledText) {
+        storage.enumerateAttribute(.font, in: storage.region) { value, range, _ in
             guard let font = value as? NSFont, font.isFixedPitch else { return }
             storage.addAttribute(.font, value: cached("typed", font) { Theme.showingOperatorsAsTyped(font) }, range: range)
         }
@@ -248,7 +326,7 @@ final class EditorStyler {
         }
     }
 
-    private func addTrait(_ trait: NSFontTraitMask, in range: NSRange, of storage: NSMutableAttributedString) {
+    private func addTrait(_ trait: NSFontTraitMask, in range: NSRange, of storage: StyledText) {
         storage.enumerateAttribute(.font, in: range) { value, subrange, _ in
             guard let font = value as? NSFont else { return }
             storage.addAttribute(.font, value: self.font(font, trait: trait), range: subrange)
@@ -256,7 +334,7 @@ final class EditorStyler {
     }
 
     /// Lines up wrapped lines of a list item with its text.
-    private func hangListLine(markerRange: NSRange, in storage: NSMutableAttributedString) {
+    private func hangListLine(markerRange: NSRange, in storage: StyledText) {
         let text = storage.string as NSString
         let line = text.lineRange(for: NSRange(location: markerRange.location, length: 0))
         let prefix = text.substring(with: NSRange(location: line.location, length: NSMaxRange(markerRange) - line.location)) + " "
@@ -322,5 +400,39 @@ final class EditorStyler {
             }
         }
         return result
+    }
+}
+
+/// Text being styled, limited to a region: changes outside it are dropped, so restyling
+/// part of a document gives exactly what styling all of it would give there.
+final class StyledText {
+    let text: NSMutableAttributedString
+    let region: NSRange
+
+    init(_ text: NSMutableAttributedString, region: NSRange) {
+        self.text = text
+        self.region = region
+    }
+
+    var string: String { text.string }
+    var length: Int { text.length }
+
+    func touches(_ range: NSRange) -> Bool {
+        NSIntersectionRange(range, region).length > 0
+    }
+
+    func addAttribute(_ key: NSAttributedString.Key, value: Any, range: NSRange) {
+        let part = NSIntersectionRange(range, region)
+        if part.length > 0 { text.addAttribute(key, value: value, range: part) }
+    }
+
+    func setAttributes(_ attributes: [NSAttributedString.Key: Any], range: NSRange) {
+        let part = NSIntersectionRange(range, region)
+        if part.length > 0 { text.setAttributes(attributes, range: part) }
+    }
+
+    func enumerateAttribute(_ key: NSAttributedString.Key, in range: NSRange, using block: (Any?, NSRange, UnsafeMutablePointer<ObjCBool>) -> Void) {
+        let part = NSIntersectionRange(range, region)
+        if part.length > 0 { text.enumerateAttribute(key, in: part, using: block) }
     }
 }

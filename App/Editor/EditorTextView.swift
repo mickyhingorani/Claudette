@@ -211,8 +211,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorageEditActions,
                      range editedRange: NSRange, changeInLength delta: Int) {
         guard editedMask.contains(.editedCharacters) else { return }
-        styler.rescan(textStorage.string)
-        styler.apply(to: textStorage)
+        let region = styler.rescan(textStorage.string, edited: editedRange, delta: delta)
+        styler.apply(to: textStorage, in: region)
         syncTables(invalidate: false)
         syncImages(invalidate: false)
         refreshDisplay(invalidate: false)

@@ -17,7 +17,7 @@ Minor items from the independent code review of the MVP, left for later.
 - Return in a CRLF file inserts a bare LF. Existing line endings are untouched.
 - `⌘I` on selected bold text turns `**bold**` into `*bold*`.
 - Backslash escapes like `\*` still show in the formatted view.
-- The whole document is re-read and restyled on every keystroke: about 66 ms at 43,000 characters in a release build, so very large files feel slow.
+- The whole document is re-read on every keystroke (about 13 ms at 43,000 characters in a release build), so very large files can still feel slow. Only the edited lines are restyled.
 - Backspace on the line right below a table merges that line into the table's last row. Undo restores it.
 
 ## Files
