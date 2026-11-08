@@ -37,9 +37,9 @@ private func hidden(_ text: String) -> [NSRange] {
         #expect(hidden("#").isEmpty)
     }
 
-    @Test func setextHeadingHidesNothing() {
+    @Test func setextHeadingHidesOnlyItsUnderline() {
         let map = MarkdownScanner.scan("Title\n===\n")
-        #expect(map.hidden.isEmpty)
+        #expect(map.hidden.map(\.range) == [r(5, 4)])
         #expect(map.spans.contains { $0.kind == .heading(level: 1) })
     }
 

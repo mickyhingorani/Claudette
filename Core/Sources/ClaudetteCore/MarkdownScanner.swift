@@ -149,8 +149,21 @@ private struct Walker: MarkupWalker {
                 let length = min(hashes + spaces, range.length)
                 hide(NSRange(location: range.location, length: length), owner: range, kind: .headingMark)
             }
+            if hashes == 0 { hideSetextUnderline(of: range) }
         }
         descendInto(heading)
+    }
+
+    /// A heading written as a line of text underlined with === or ---: the underline,
+    /// with the line break before it, shows only while the caret is in the heading.
+    private mutating func hideSetextUnderline(of range: NSRange) {
+        let lastLine = ns.lineRange(for: NSRange(location: NSMaxRange(range) - 1, length: 0))
+        guard lastLine.location > range.location else { return }
+        let underline = ns.substring(with: lastLine).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let mark = underline.first, mark == "=" || mark == "-", underline.allSatisfy({ $0 == mark }) else { return }
+        var start = lastLine.location - 1
+        if start > range.location, ns.character(at: start) == 0x0A, ns.character(at: start - 1) == 0x0D { start -= 1 }
+        hide(NSRange(location: start, length: NSMaxRange(range) - start), owner: range)
     }
 
     mutating func visitLink(_ link: Link) {

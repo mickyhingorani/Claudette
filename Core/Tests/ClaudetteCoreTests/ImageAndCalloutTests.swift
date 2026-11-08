@@ -88,3 +88,23 @@ private func r(_ location: Int, _ length: Int) -> NSRange { NSRange(location: lo
         #expect(merged == full)
     }
 }
+
+@Suite struct SetextHeadingTests {
+    private func r(_ location: Int, _ length: Int) -> NSRange { NSRange(location: location, length: length) }
+
+    @Test func equalsUnderlineIsHiddenAwayFromTheCaret() {
+        let map = MarkdownScanner.scan("Title\n===\n\nbody\n")
+        #expect(map.hidden.contains(HiddenRange(range: r(5, 4), owner: r(0, 9), kind: .inline)))
+        #expect(map.spans.contains(StyledSpan(range: r(0, 9), kind: .heading(level: 1))))
+    }
+
+    @Test func dashUnderlineIsHiddenToo() {
+        let map = MarkdownScanner.scan("Title\n---\n")
+        #expect(map.hidden.contains { $0.range == r(5, 4) })
+    }
+
+    @Test func crlfUnderlineTakesBothCharacters() {
+        let map = MarkdownScanner.scan("Title\r\n===\r\n")
+        #expect(map.hidden.contains { $0.range == r(5, 5) })
+    }
+}

@@ -2,6 +2,7 @@ import Foundation
 
 public enum FileNaming {
     private static let maxLength = 60
+    private static let maxBytes = 200
 
     /// A file name from the first line of text that has words in it.
     public static func name(fromFirstLineOf text: String) -> String {
@@ -11,7 +12,10 @@ public enum FileNaming {
             name = name.components(separatedBy: CharacterSet(charactersIn: "/\\:")).joined(separator: "-")
             name = name.trimmingCharacters(in: CharacterSet(charactersIn: ". "))
             if !name.isEmpty {
-                return String(name.prefix(maxLength)).trimmingCharacters(in: .whitespaces)
+                var short = String(name.prefix(maxLength))
+                // File names are limited to 255 bytes; a short title of emoji can pass that.
+                while short.utf8.count > maxBytes { short.removeLast() }
+                return short.trimmingCharacters(in: .whitespaces)
             }
         }
         return "Untitled"
