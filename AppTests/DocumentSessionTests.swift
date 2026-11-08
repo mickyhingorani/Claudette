@@ -10,14 +10,14 @@ final class DocumentSessionTests: XCTestCase {
     private var text = ""
     private var session: DocumentSession!
 
-    override func setUpWithError() throws {
+    override func setUp() {
         folder = FileManager.default.temporaryDirectory.appendingPathComponent("SessionTests-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         text = ""
         session = DocumentSession(autosaveDelay: 60) { [unowned self] in self.text }
     }
 
-    override func tearDownWithError() throws {
+    override func tearDown() {
         try? FileManager.default.removeItem(at: folder)
     }
 

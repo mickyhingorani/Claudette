@@ -20,12 +20,12 @@ final class StubImageProtocol: URLProtocol {
 final class ImageTests: XCTestCase {
     private var folder: URL!
 
-    override func setUpWithError() throws {
+    override func setUp() {
         folder = FileManager.default.temporaryDirectory.appendingPathComponent("ClaudetteImageTests-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
 
-    override func tearDownWithError() throws {
+    override func tearDown() {
         try? FileManager.default.removeItem(at: folder)
     }
 
@@ -189,7 +189,7 @@ final class ImageTests: XCTestCase {
 final class ImageResizeTests: XCTestCase {
     func testNarrowingTheWindowShrinksAWideImage() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("ClaudetteResize-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         try ImageTests.png(width: 3000, height: 1500).write(to: folder.appendingPathComponent("wide.png"))
         let (_, editor) = EditorTextView.makeInScrollView()
@@ -225,14 +225,14 @@ final class CountingImageProtocol: URLProtocol {
 final class ImageLoaderTests: XCTestCase {
     private var folder: URL!
 
-    override func setUpWithError() throws {
+    override func setUp() {
         folder = FileManager.default.temporaryDirectory.appendingPathComponent("ClaudetteLoader-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         CountingImageProtocol.requests = []
         CountingImageProtocol.succeeds = true
     }
 
-    override func tearDownWithError() throws {
+    override func tearDown() {
         try? FileManager.default.removeItem(at: folder)
     }
 
