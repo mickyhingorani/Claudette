@@ -40,9 +40,11 @@
 		7A79FC0F741B39CE04789344 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9715F52408350CB000B481D /* AppModel.swift */; };
 		89CE99D5BBCDBA9F17B95CF0 /* IBMPlexSans[wdth,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 28F5AE0FD2D2685603753EFF /* IBMPlexSans[wdth,wght].ttf */; };
 		940FA2A577F8DBBAE5E884A7 /* GeistMono-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = E08452B54F3CA78B4D68312B /* GeistMono-Italic[wght].ttf */; };
+		9A1BBA0E0F436E43BF7A06C6 /* GuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69B12467E99F0EC48E96F4AA /* GuideView.swift */; };
 		9DF77424AD9ACC2E1A3B4731 /* CalloutAndCheckboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1886E3FCD8457D0D28CA0D4 /* CalloutAndCheckboxTests.swift */; };
 		AB7C88463CB6D53C8437F53D /* TypingSpeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EA10FA3D89E1E7956DEBE1 /* TypingSpeedTests.swift */; };
 		B952ED02631C9B50481FCFCE /* DocumentSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1242C3B6A98DE62F9D05E4D4 /* DocumentSession.swift */; };
+		BBE33863409286DFC9C248F5 /* GuideTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE360946399D0CD26366F6F4 /* GuideTests.swift */; };
 		C960C7B815F9E827E741C78E /* ClaudetteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */; };
 		CDCC06B4A619457821EB9E9C /* ImageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940B8A35B594596B20FE853C /* ImageTests.swift */; };
 		D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */; };
@@ -94,6 +96,7 @@
 		5B4C68877C7F157F9469B85F /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		5EE10C310B2B43A4ED85F341 /* Geist-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Geist-Italic[wght].ttf"; sourceTree = "<group>"; };
 		686721175B082A3CD208B06D /* IBMPlexMono-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-BoldItalic.ttf"; sourceTree = "<group>"; };
+		69B12467E99F0EC48E96F4AA /* GuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideView.swift; sourceTree = "<group>"; };
 		7E4686DDE37BF53C77F82A85 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
 		818CC86FF5295B038D507C33 /* EditorTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTextView.swift; sourceTree = "<group>"; };
 		841420B921672F16E1F5D936 /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
@@ -112,6 +115,7 @@
 		C8BCF9F6ED0A88FDCF044A29 /* IBMPlexMono-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-Bold.ttf"; sourceTree = "<group>"; };
 		D5EA10FA3D89E1E7956DEBE1 /* TypingSpeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypingSpeedTests.swift; sourceTree = "<group>"; };
 		D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
+		DE360946399D0CD26366F6F4 /* GuideTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuideTests.swift; sourceTree = "<group>"; };
 		DFAB8DC78977B6E9410F8709 /* IBMPlexSans-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "IBMPlexSans-OFL.txt"; sourceTree = "<group>"; };
 		E08452B54F3CA78B4D68312B /* GeistMono-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GeistMono-Italic[wght].ttf"; sourceTree = "<group>"; };
 		E9715F52408350CB000B481D /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -188,6 +192,7 @@
 				F7814F2703382C891EDDC610 /* CaretTests.swift */,
 				0068C5EA5572C4BF41E52F1D /* DocumentSessionTests.swift */,
 				96D9C0257768097483F1AE63 /* EditorTests.swift */,
+				DE360946399D0CD26366F6F4 /* GuideTests.swift */,
 				940B8A35B594596B20FE853C /* ImageTests.swift */,
 				3326C1AE582E0280FB0122B4 /* LinkTests.swift */,
 				B17989DDD758FF6619372CD3 /* ParagraphTests.swift */,
@@ -209,6 +214,7 @@
 				1242C3B6A98DE62F9D05E4D4 /* DocumentSession.swift */,
 				55A5438F65AE9739BCE3AEE1 /* FileListView.swift */,
 				2FD423DB075FF474B94C7621 /* FolderWatcher.swift */,
+				69B12467E99F0EC48E96F4AA /* GuideView.swift */,
 				872C2316D731CE800F69D51A /* Info.plist */,
 				18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */,
 				841420B921672F16E1F5D936 /* Snapshot.swift */,
@@ -367,6 +373,7 @@
 				24C7F9B99A96F42B97536E06 /* EditorTextView.swift in Sources */,
 				EC9FF80388CCF0084AA008B5 /* FileListView.swift in Sources */,
 				379AE30927A3A4076AA44076 /* FolderWatcher.swift in Sources */,
+				9A1BBA0E0F436E43BF7A06C6 /* GuideView.swift in Sources */,
 				350B6C47BCB3047D0F44C67A /* HidingLayoutManager.swift in Sources */,
 				F4C0D67433E10CABED133846 /* ImageLoader.swift in Sources */,
 				626FDBCE484C8E2DF27BC8D3 /* ImageOverlayView.swift in Sources */,
@@ -386,6 +393,7 @@
 				F89A9C67DE2ED80C33E4E232 /* CaretTests.swift in Sources */,
 				5F0C9D4F9FB57904DF8AE260 /* DocumentSessionTests.swift in Sources */,
 				D9D1ED470E53BABC4EC71936 /* EditorTests.swift in Sources */,
+				BBE33863409286DFC9C248F5 /* GuideTests.swift in Sources */,
 				CDCC06B4A619457821EB9E9C /* ImageTests.swift in Sources */,
 				171420B68E026CAB58506412 /* LinkTests.swift in Sources */,
 				0D45AB81AA2BDC6A5D6851B5 /* ParagraphTests.swift in Sources */,

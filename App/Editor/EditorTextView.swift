@@ -19,6 +19,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         }
     }
     private(set) var imageOverlays: [ImageOverlayView] = []
+    /// A fixed side margin, for small previews like the Markdown guide's. Nil centers a reading column.
+    var sideInset: CGFloat?
     /// The folder of the open file, for image paths written relative to it.
     var documentFolder: URL?
 
@@ -479,9 +481,10 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         // The view also grows taller as text is typed; only a new width changes what fits.
         let widthChanged = newSize.width != frame.width
         super.setFrameSize(newSize)
-        let side = max(28, (newSize.width - Self.columnWidth) / 2)
-        if textContainerInset.width != side {
-            textContainerInset = NSSize(width: side, height: 14)
+        let side = sideInset ?? max(28, (newSize.width - Self.columnWidth) / 2)
+        let inset = NSSize(width: side, height: sideInset == nil ? 14 : 0)
+        if textContainerInset != inset {
+            textContainerInset = inset
         }
         if widthChanged, textStorage != nil, layoutManager != nil {
             syncTables(invalidate: true)
@@ -575,6 +578,16 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         } else {
             super.insertText(text, replacementRange: replacementRange)
         }
+    }
+
+    /// Inserts a Markdown guide example, then selects its sample text to type over.
+    func insertGuideEntry(_ entry: GuideEntry) {
+        guard isEditable else { return }
+        commitCellEdits()
+        let result = MarkdownGuide.insertion(of: entry, in: string, selection: selectedRange())
+        guard applyEdit(result.edit.range, result.edit.replacement) else { return }
+        setSelectedRange(result.selection)
+        scrollRangeToVisible(result.selection)
     }
 
     @discardableResult

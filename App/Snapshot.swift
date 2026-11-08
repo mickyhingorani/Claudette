@@ -45,7 +45,9 @@ enum Snapshot {
         store.set(defaults.string(forKey: "snapshotMode") ?? "formatted", forKey: "viewMode")
         let model = AppModel(defaults: store, starterFolder: URL(fileURLWithPath: folder), watchesFolders: false)
         model.isFileListOpen = defaults.bool(forKey: "snapshotList")
-        let size = NSSize(width: 980, height: 760)
+        model.isGuideOpen = defaults.bool(forKey: "snapshotGuide")
+        let height = defaults.object(forKey: "snapshotHeight") == nil ? 760 : defaults.integer(forKey: "snapshotHeight")
+        let size = NSSize(width: 980, height: CGFloat(height))
         let host = NSHostingView(rootView: RootView(model: model))
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless], backing: .buffered, defer: false)
         window.contentView = host

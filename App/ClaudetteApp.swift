@@ -44,6 +44,9 @@ struct ClaudetteApp: App {
                 Button("Import…") { model.chooseFilesToImport() }
                     .keyboardShortcut("i", modifiers: [.command, .shift])
             }
+            CommandGroup(replacing: .help) {
+                Button("Markdown Guide") { model.isGuideOpen = true }
+            }
             CommandGroup(replacing: .sidebar) {
                 Button(model.isFileListOpen ? "Hide File List" : "Show File List") {
                     model.isFileListOpen.toggle()
@@ -53,6 +56,9 @@ struct ClaudetteApp: App {
                     model.viewMode = model.viewMode == .formatted ? .markdown : .formatted
                 }
                 .keyboardShortcut("e")
+                Divider()
+                Button(model.isGuideOpen ? "Hide Markdown Guide" : "Show Markdown Guide") { model.toggleGuide() }
+                    .keyboardShortcut("/")
                 Divider()
                 Picker("Theme", selection: $model.themeID) {
                     ForEach(Theme.all, id: \.id) { theme in

@@ -23,12 +23,17 @@ struct RootView: View {
                         .transition(.move(edge: .leading))
                 }
                 content
+                if model.isGuideOpen {
+                    GuideView(model: model)
+                        .transition(.move(edge: .trailing))
+                }
             }
             .clipped()
         }
         .background(Color(nsColor: theme.background))
         .ignoresSafeArea()
         .animation(.easeInOut(duration: 0.22), value: model.isFileListOpen)
+        .animation(.easeInOut(duration: 0.22), value: model.isGuideOpen)
         .frame(minWidth: 480, minHeight: 360)
         .dropDestination(for: URL.self) { urls, _ in
             model.handleDrop(urls, into: nil)
@@ -98,6 +103,9 @@ struct RootView: View {
             }
             .padding(2)
             .background(Color(nsColor: theme.chip), in: RoundedRectangle(cornerRadius: 8))
+            barButton(symbol: "book.closed", label: "Markdown Guide (⌘/)", isOn: model.isGuideOpen) {
+                model.toggleGuide()
+            }
         }
         .padding(.leading, 84)
         .padding(.trailing, 12)

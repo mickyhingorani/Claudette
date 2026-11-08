@@ -32,6 +32,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var unseen: Set<URL> = []
     @Published private(set) var notice: String?
     @Published var isFileListOpen = false
+    /// The Markdown guide panel on the right.
+    @Published var isGuideOpen = false
     static let fileListWidths: ClosedRange<CGFloat> = 180...420
     @Published var fileListWidth: CGFloat = 250 {
         didSet {
@@ -303,6 +305,16 @@ final class AppModel: ObservableObject {
             return
         }
         open(url)
+    }
+
+    func toggleGuide() {
+        isGuideOpen.toggle()
+    }
+
+    /// Inserts a guide example into the open document and puts the cursor back in it.
+    func insert(_ entry: GuideEntry) {
+        editor.insertGuideEntry(entry)
+        editor.window?.makeFirstResponder(editor)
     }
 
     func newFile() {
