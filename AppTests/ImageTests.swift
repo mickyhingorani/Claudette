@@ -302,3 +302,11 @@ final class ImageLoaderTests: XCTestCase {
         guard case .failed = ImageLoader(session: .shared).state(for: file) else { return XCTFail("should refuse") }
     }
 }
+
+final class AppSettingsTests: XCTestCase {
+    /// Plain http pictures are blocked by default; Claudette only fetches pictures, so it allows them.
+    func testPlainHttpPicturesAreAllowed() {
+        let security = Bundle.main.object(forInfoDictionaryKey: "NSAppTransportSecurity") as? [String: Any]
+        XCTAssertEqual(security?["NSAllowsArbitraryLoads"] as? Bool, true)
+    }
+}
