@@ -46,7 +46,7 @@ struct FileListView: View {
             }
             .padding(10)
         }
-        .background(Color(nsColor: theme.panel))
+        .background(Color(nsColor: theme.sidePanel))
         .alert("Rename", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Name", text: $newName)
             Button("Rename") {
@@ -85,7 +85,7 @@ struct FileListView: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(isCurrent ? Color(nsColor: theme.line) : .clear, in: RoundedRectangle(cornerRadius: 6))
+            .background(isCurrent ? Color(nsColor: theme.selection) : .clear, in: RoundedRectangle(cornerRadius: 6))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -132,7 +132,7 @@ struct FileListView: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(isCurrent ? Color(nsColor: theme.line) : .clear, in: RoundedRectangle(cornerRadius: 6))
+            .background(isCurrent ? Color(nsColor: theme.selection) : .clear, in: RoundedRectangle(cornerRadius: 6))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

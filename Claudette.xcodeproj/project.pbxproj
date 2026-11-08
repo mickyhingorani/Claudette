@@ -12,6 +12,7 @@
 		0A45766E1BB3DA9C8E76E5F1 /* GeistMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 411D6E3AEF8DA821FDFC63BD /* GeistMono-OFL.txt */; };
 		0B04B79D2B6DE7A72A274932 /* CodeLabelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FAA9EA8501C1AD5D57D6FAD /* CodeLabelTests.swift */; };
 		0D45AB81AA2BDC6A5D6851B5 /* ParagraphTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B17989DDD758FF6619372CD3 /* ParagraphTests.swift */; };
+		0E060E998B37F3F79F09E245 /* ThemeDocsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5571ED7B269036AE9964887C /* ThemeDocsTests.swift */; };
 		0E38A23CEDA871AB4BA2496A /* Geist-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5EE10C310B2B43A4ED85F341 /* Geist-Italic[wght].ttf */; };
 		12E1C75F3408BA49489D5D33 /* ListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8120104FB739064E3B04501 /* ListTests.swift */; };
 		171420B68E026CAB58506412 /* LinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3326C1AE582E0280FB0122B4 /* LinkTests.swift */; };
@@ -104,6 +105,7 @@
 		4BC5945C3C2FB3DD3D0AA2E6 /* Geist[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Geist[wght].ttf"; sourceTree = "<group>"; };
 		4BC9F1E7148162EDE1EE2D9A /* JetBrainsMono-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "JetBrainsMono-OFL.txt"; sourceTree = "<group>"; };
 		55082A4BFD3522E32AF0FDD8 /* ImageOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageOverlayView.swift; sourceTree = "<group>"; };
+		5571ED7B269036AE9964887C /* ThemeDocsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeDocsTests.swift; sourceTree = "<group>"; };
 		55A5438F65AE9739BCE3AEE1 /* FileListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
 		57AF89E94939D999B66B13C8 /* Claudette.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Claudette.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B4C68877C7F157F9469B85F /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
@@ -228,6 +230,7 @@
 				2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */,
 				D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */,
 				25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */,
+				5571ED7B269036AE9964887C /* ThemeDocsTests.swift */,
 				FA5F101BB4C638D9E7178C4F /* ThemeTests.swift */,
 				D5EA10FA3D89E1E7956DEBE1 /* TypingSpeedTests.swift */,
 			);
@@ -440,6 +443,7 @@
 				415A729A4D294FA3888AB804 /* RealPathTests.swift in Sources */,
 				D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */,
 				501683150F9D895D2FBF86DE /* TableEditingTests.swift in Sources */,
+				0E060E998B37F3F79F09E245 /* ThemeDocsTests.swift in Sources */,
 				F4A33C31CFE78FB12874452F /* ThemeTests.swift in Sources */,
 				AB7C88463CB6D53C8437F53D /* TypingSpeedTests.swift in Sources */,
 			);

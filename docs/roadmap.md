@@ -28,7 +28,7 @@ Decisions along the way:
 
 Claudette reads and edits Markdown with:
 - **Views:** a formatted view and a Markdown view (`⌘E`), both editable. The formatted view hides Markdown syntax except where the cursor is.
-- **Themes:** Slate (the default), Solarized, Nord, Harbor and Terminal, each with its own fonts and colors. Harbor (deep teal, gold and pink, after a developer docs site) adds serif titles, a blue Note callout and outlined code.
+- **Themes:** Slate (the default), Solarized, Nord, Harbor, Harbor Light and Terminal, each with its own fonts and colors; [docs/themes.md](themes.md) lists them all. Harbor Light is the one light theme, and the window's controls turn light with it. Harbor (deep teal, gold and pink, after a developer docs site) adds serif titles, a blue Note callout and outlined code.
 - **Text and code:** headings, bold, italics, links, strikethrough, inline code, quotes and dividers. Code blocks get syntax colors, a language label and a Copy button.
 - **Tables:** drawn as real tables and edited in place.
 - **Pictures:** from the Mac or the web.
@@ -41,7 +41,7 @@ Claudette reads and edits Markdown with:
   - Autosave, conflict copies, and reloading when a file changes outside the app.
 - **Links:** ⌘-click opens web and email links, and links to other Markdown notes.
 
-The code is on `main`, and 538 tests pass. The app runs from Xcode's build folder; it isn't installed in Applications yet.
+The code is on `main`, and 546 tests pass. The app runs from Xcode's build folder; it isn't installed in Applications yet.
 
 ## What's next
 
@@ -70,5 +70,6 @@ Nothing is in progress. Saved for later, roughly in order of usefulness:
 
 - [Design document](superpowers/specs/2026-11-07-claudette-mvp-design.md): intent, goals, decisions, and the library-versus-folder write-up.
 - [Code review, 7 November](review-2026-11-07.md): every finding, its fix and its test.
+- [Themes](themes.md): every theme's fonts and colors, with screenshots.
 - [Known issues](known-issues.md): minor bugs left for later.
 - [MVP plan](superpowers/plans/2026-11-07-claudette-mvp.md): how the first version was built, now finished.

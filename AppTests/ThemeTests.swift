@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import XCTest
 import ClaudetteCore
 @testable import Claudette
@@ -29,7 +30,7 @@ final class ThemeTests: XCTestCase {
     }
 
     func testAllThemesAreOffered() {
-        XCTAssertEqual(Theme.all.map(\.name), ["Slate", "Nord", "Solarized", "Harbor", "Terminal"])
+        XCTAssertEqual(Theme.all.map(\.name), ["Slate", "Nord", "Solarized", "Harbor", "Harbor Light", "Terminal"])
     }
 
     func testSlateIsTheDefault() {
@@ -40,8 +41,29 @@ final class ThemeTests: XCTestCase {
         XCTAssertEqual(Theme.named("ink"), .slate)
     }
 
+    /// Themes differ in font, except a light and dark pair of the same theme.
     func testEachThemeHasItsOwnFont() {
-        XCTAssertEqual(Set(Theme.all.map { $0.bodyFont.familyName }).count, Theme.all.count)
+        XCTAssertEqual(Set(Theme.all.map { "\($0.bodyFont.familyName ?? "") \($0.isLight)" }).count, Theme.all.count)
+    }
+
+    func testOnlyHarborLightIsLight() {
+        XCTAssertEqual(Theme.all.filter(\.isLight).map(\.name), ["Harbor Light"])
+    }
+
+    /// Harbor Light's side panels match its page, not its white code panel; other themes use the code panel color.
+    func testSidePanelColor() {
+        XCTAssertEqual(Theme.harborLight.sidePanel, Theme.harborLight.background)
+        for theme in Theme.all where theme != .harborLight {
+            XCTAssertEqual(theme.sidePanel, theme.panel, theme.name)
+        }
+    }
+
+    /// Harbor Light selects text in pale blue; other themes use their line color.
+    func testSelectionColor() {
+        XCTAssertNotEqual(Theme.harborLight.selection, Theme.harborLight.line)
+        for theme in Theme.all where theme != .harborLight {
+            XCTAssertEqual(theme.selection, theme.line, theme.name)
+        }
     }
 
     /// Headings, body text and code, as the bundled fonts' family names.
@@ -51,6 +73,7 @@ final class ThemeTests: XCTestCase {
             ["Atkinson Hyperlegible Next", "Atkinson Hyperlegible Next", "JetBrains Mono"],
             ["Geist", "Geist", "Geist Mono"],
             ["IBM Plex Sans", "IBM Plex Sans", "IBM Plex Mono"],
+            ["Hanken Grotesk", "Hanken Grotesk", "JetBrains Mono"],
             ["Hanken Grotesk", "Hanken Grotesk", "JetBrains Mono"],
             ["JetBrains Mono", "JetBrains Mono", "JetBrains Mono"],
         ])
@@ -94,28 +117,31 @@ final class ThemeTests: XCTestCase {
         }
     }
 
-    /// Harbor sets its big titles in a serif; every other theme uses its heading font.
+    private let harbors: [Theme] = [.harbor, .harborLight]
+
+    /// Both Harbors set their big titles in a serif; every other theme uses its heading font.
     func testTitleFonts() {
-        XCTAssertEqual(Theme.harbor.titleFont.familyName, "Newsreader")
-        for theme in Theme.all where theme != .harbor {
+        for theme in harbors { XCTAssertEqual(theme.titleFont.familyName, "Newsreader", theme.name) }
+        for theme in Theme.all where !harbors.contains(theme) {
             XCTAssertEqual(theme.titleFont, theme.headingFont, theme.name)
         }
     }
 
-    /// Harbor's Note callouts are blue, not its gold link color; other themes keep theirs.
+    /// Harbor's Note callouts are blue, not its link color; other themes keep theirs.
     func testHarborNoteCalloutIsBlue() {
-        let harbor = Theme.harbor.palette
-        XCTAssertNotEqual(harbor.callout(.note), harbor.link)
-        XCTAssertGreaterThanOrEqual(contrast(harbor.callout(.note), Theme.harbor.background), 4.5)
-        for theme in Theme.all where theme != .harbor {
+        for theme in harbors {
+            XCTAssertNotEqual(theme.palette.callout(.note), theme.palette.link, theme.name)
+            XCTAssertGreaterThanOrEqual(contrast(theme.palette.callout(.note), theme.background), 4.5, theme.name)
+        }
+        for theme in Theme.all where !harbors.contains(theme) {
             XCTAssertEqual(theme.palette.callout(.note), theme.palette.link, theme.name)
         }
     }
 
-    /// Only Harbor outlines its code chips and code blocks.
+    /// Only the Harbors outline their code chips and code blocks.
     func testOnlyHarborOutlinesCode() {
-        XCTAssertNotNil(Theme.harbor.outline)
-        for theme in Theme.all where theme != .harbor {
+        for theme in harbors { XCTAssertNotNil(theme.outline, theme.name) }
+        for theme in Theme.all where !harbors.contains(theme) {
             XCTAssertNil(theme.outline, theme.name)
         }
     }
@@ -188,6 +214,18 @@ final class ThemeFontEditorTests: XCTestCase {
         XCTAssertEqual(heading.familyName, "IBM Plex Sans")
         XCTAssertEqual(body.familyName, "IBM Plex Sans")
         XCTAssertGreaterThan(heading.pointSize, body.pointSize)
+    }
+
+    func testEditorSelectsInTheThemesSelectionColor() {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.theme = .harborLight
+        XCTAssertEqual(editor.selectedTextAttributes[.backgroundColor] as? NSColor, Theme.harborLight.selection)
+    }
+
+    /// Window controls and scroll bars match the theme: light for light themes, dark for dark ones.
+    func testWindowAppearanceFollowsTheTheme() {
+        XCTAssertEqual(Theme.harborLight.colorScheme, .light)
+        XCTAssertEqual(Theme.slate.colorScheme, .dark)
     }
 
     func testEditorPassesTheOutlineToDrawing() {

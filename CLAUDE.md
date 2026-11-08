@@ -31,6 +31,8 @@ $APP -snapshotFile doc.md -snapshotOut out.png -snapshotTheme slate -snapshotHei
 $APP -snapshotFolder dir -snapshotOut out.png -snapshotList YES -snapshotGuide YES         # whole window
 ```
 
+After changing a theme, run `python3 scripts/theme-docs.py App/Theme.swift docs/themes.md` and re-render its screenshot (commands in the script). A test fails if `docs/themes.md` falls behind.
+
 Other options: `-snapshotMode markdown`, `-snapshotCursor <offset>`, `-snapshotOpenedFile <path>`. Snapshots wait for web pictures to load.
 
 ### Restarting Micky's copy

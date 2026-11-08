@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import ClaudetteCore
 
 enum ViewMode: String {
@@ -81,6 +82,21 @@ struct Theme: Equatable {
     var titleFace: NSFont? = nil
     /// A thin outline around inline code and code blocks, for themes that draw one.
     var outline: NSColor? = nil
+
+    /// Selected text's background, when a theme wants one other than its line color.
+    var selectionColor: NSColor? = nil
+    /// A background for the file list and guide, when it shouldn't be the code panel color.
+    var sidePanelColor: NSColor? = nil
+
+    var selection: NSColor { selectionColor ?? line }
+    /// The file list and guide's background: the code panel color unless a theme sets its own.
+    var sidePanel: NSColor { sidePanelColor ?? panel }
+    /// Light themes have a light page; the window's controls and scroll bars follow.
+    var isLight: Bool {
+        let c = background.usingColorSpace(.sRGB)!
+        return 0.2126 * c.redComponent + 0.7152 * c.greenComponent + 0.0722 * c.blueComponent > 0.5
+    }
+    var colorScheme: ColorScheme { isLight ? .light : .dark }
 
     /// Big (`#`) titles: the title face if the theme has one, else the heading font.
     var titleFont: NSFont { titleFace ?? headingFont }
@@ -165,6 +181,23 @@ struct Theme: Equatable {
             note: color(0x6CB6F0)),
         titleFace: font("Newsreader", size: 16), outline: color(0x24505C))
 
+    /// Harbor's daytime twin: warm paper, near-black text, teal and pink.
+    static let harborLight = Theme(
+        id: "harbor-light", name: "Harbor Light",
+        background: color(0xEFEEEA), text: color(0x241C15), soft: color(0x4F4943), dim: color(0x6F6B64),
+        accent: color(0xB5176F), chip: color(0xFFFFFF), panel: color(0xFFFFFF), line: color(0xDCDAD3),
+        headingFont: font("Hanken Grotesk", size: 16), bodyFont: font("Hanken Grotesk", size: 16),
+        monoFont: font("JetBrains Mono", size: 14),
+        palette: Palette(
+            heading1: color(0x241C15), heading2: color(0x006B75), heading3: color(0xB5176F),
+            strong: color(0x241C15), emphasis: color(0xB5176F), link: color(0x006B75), check: color(0xB5176F), inlineCode: color(0x006B75),
+            quoteBar: color(0xF03EAE), tableHeader: color(0xF7F6F3), tableHeaderText: color(0x241C15),
+            keyword: color(0xB5176F), string: color(0x2B7A2B), number: color(0x9A4F00), comment: color(0x77746D),
+            function: color(0x0B62A4), tag: color(0xB3261E), attribute: color(0xC0262D), type: color(0x006B75),
+            note: color(0x0B62A4)),
+        titleFace: font("Newsreader", size: 16), outline: color(0xD6D4CC), selectionColor: color(0xCFE1E6),
+        sidePanelColor: color(0xEFEEEA))
+
     static let terminal = Theme(
         id: "terminal", name: "Terminal",
         background: color(0x050805), text: color(0x4DFF88), soft: color(0x3FE878), dim: color(0x2BA857),
@@ -177,7 +210,7 @@ struct Theme: Equatable {
             keyword: color(0xD6FFE4), string: color(0x9CFFBE), number: color(0x7AF0A0), comment: color(0x2BA857),
             function: color(0x4DFF88), tag: color(0xD6FFE4), attribute: color(0x7AF0A0), type: color(0x9CFFBE)))
 
-    static let all = [slate, nord, solarized, harbor, terminal]
+    static let all = [slate, nord, solarized, harbor, harborLight, terminal]
     static let `default` = slate
 
     static func named(_ id: String) -> Theme { all.first { $0.id == id } ?? .default }
