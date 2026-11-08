@@ -393,10 +393,25 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         insertText(lineEnding, replacementRange: selectedRange())
     }
 
+    /// Whether the line at `location` starts with Markdown that only works at a line's start.
+    private func startsBlock(at location: Int) -> Bool {
+        let ns = string as NSString
+        guard location < ns.length else { return false }
+        let line = ns.substring(with: ns.lineRange(for: NSRange(location: location, length: 0)))
+        let text = line.drop { $0 == " " }
+        if let first = text.first, "-*+".contains(first), text.dropFirst().first == " " { return true }
+        if [">", "#", "|"].contains(where: { text.hasPrefix($0) }) || text.hasPrefix("```") || text.hasPrefix("~~~") { return true }
+        let digits = text.prefix { $0.isNumber }
+        if !digits.isEmpty, let mark = text.dropFirst(digits.count).first, ".)".contains(mark) { return true }
+        return false
+    }
+
     override func deleteForward(_ sender: Any?) {
         let selection = selectedRange()
         if selection.length == 0, let item = paragraphBreaks.first(where: { $0.range.location == selection.location }) {
-            applyEdit(NSRange(location: item.range.location, length: item.nextParagraph - item.range.location), "")
+            let keepsMarker = startsBlock(at: item.nextParagraph)
+            let start = keepsMarker ? NSMaxRange(item.range) : item.range.location
+            applyEdit(NSRange(location: start, length: item.nextParagraph - start), "")
             setSelectedRange(NSRange(location: item.range.location, length: 0))
             return
         }
@@ -474,10 +489,17 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     /// Backspace at the start of a heading removes its hidden mark, making it plain text.
     override func deleteBackward(_ sender: Any?) {
         let selection = selectedRange()
-        // At the start of a paragraph, joins it to the one before.
+        // At the start of a paragraph, joins it to the one before. A list item, quote or other
+        // block would lose its marker that way, so for those only the blank line goes.
         if selection.length == 0, let item = paragraphBreaks.first(where: { $0.nextParagraph == selection.location }) {
-            applyEdit(NSRange(location: item.range.location, length: item.nextParagraph - item.range.location), "")
-            setSelectedRange(NSRange(location: item.range.location, length: 0))
+            if startsBlock(at: item.nextParagraph) {
+                let blank = NSRange(location: NSMaxRange(item.range), length: item.nextParagraph - NSMaxRange(item.range))
+                applyEdit(blank, "")
+                setSelectedRange(NSRange(location: blank.location, length: 0))
+            } else {
+                applyEdit(NSRange(location: item.range.location, length: item.nextParagraph - item.range.location), "")
+                setSelectedRange(NSRange(location: item.range.location, length: 0))
+            }
             return
         }
         guard selection.length == 0, let mark = hiddenHeadingMarks.first(where: { NSMaxRange($0) == selection.location }) else {

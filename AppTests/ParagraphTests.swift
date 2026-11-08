@@ -192,6 +192,37 @@ final class ParagraphTests: XCTestCase {
         XCTAssertEqual(caretLocation(editor), 1)
     }
 
+    func testBackspaceBeforeAListItemKeepsItsMarker() {
+        let editor = makeEditor("- a\n\n- b", caret: 5)
+        editor.deleteBackward(nil)
+        XCTAssertEqual(editor.string, "- a\n- b")
+        XCTAssertEqual(editor.selectedRange().location, 4)
+    }
+
+    func testBackspaceBeforeANumberedItemKeepsItsNumber() {
+        let editor = makeEditor("1. a\n\n2. b", caret: 6)
+        editor.deleteBackward(nil)
+        XCTAssertEqual(editor.string, "1. a\n2. b")
+    }
+
+    func testBackspaceBeforeAQuoteKeepsItsMarker() {
+        let editor = makeEditor("Para\n\n> quote", caret: 6)
+        editor.deleteBackward(nil)
+        XCTAssertEqual(editor.string, "Para\n> quote")
+    }
+
+    func testBackspaceBeforeACrlfListItemKeepsItsMarker() {
+        let editor = makeEditor("- a\r\n\r\n- b", caret: 7)
+        editor.deleteBackward(nil)
+        XCTAssertEqual(editor.string, "- a\r\n- b")
+    }
+
+    func testDeleteBeforeAListItemKeepsItsMarker() {
+        let editor = makeEditor("- a\n\n- b", caret: 3)
+        editor.deleteForward(nil)
+        XCTAssertEqual(editor.string, "- a\n- b")
+    }
+
     func testBackspaceOnEmptyNewParagraphRemovesIt() {
         let editor = makeEditor("ab", caret: 2)
         editor.insertNewline(nil)
