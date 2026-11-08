@@ -208,6 +208,54 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         hidingLayoutManager.emptyLineFont = styler.emptyLineFont
         hidingLayoutManager.paragraphGap = styler.paragraphGap
         hidingLayoutManager.setDisplay(hidden: display.hidden, substitutions: display.substitutions, invalidate: invalidate)
+        syncCodeLabels()
+    }
+
+    // MARK: Code labels
+
+    private(set) var codeLabels: [CodeLabelView] = []
+    /// The code block each label belongs to, in the same order.
+    private var labeledBlocks: [CodeBlockInfo] = []
+    var copyPasteboard = NSPasteboard.general
+
+    /// A language label and Copy button for each closed code block whose fence names a language.
+    /// They hide while the caret is in the block, since its fence shows then.
+    private func syncCodeLabels() {
+        var blocks: [(block: CodeBlockInfo, name: String)] = []
+        if viewMode == .formatted {
+            for block in styler.map.codeBlocks where block.isClosed {
+                if let language = block.language, let name = CodeHighlighter.shared.displayName(for: language) {
+                    blocks.append((block, name))
+                }
+            }
+        }
+        while codeLabels.count > blocks.count {
+            codeLabels.removeLast().removeFromSuperview()
+        }
+        for (index, entry) in blocks.enumerated() {
+            if index < codeLabels.count {
+                codeLabels[index].update(language: entry.name, theme: theme)
+            } else {
+                let label = CodeLabelView(language: entry.name, theme: theme)
+                addSubview(label)
+                codeLabels.append(label)
+            }
+            let label = codeLabels[index]
+            label.isHidden = !hidingLayoutManager.isHidden(at: entry.block.range.location)
+            label.onCopy = { [weak self, weak label] in
+                guard let self, let label, let index = self.codeLabels.firstIndex(where: { $0 === label }) else { return }
+                self.copyCode(of: self.labeledBlocks[index])
+                label.confirmCopy()
+            }
+        }
+        labeledBlocks = blocks.map(\.block)
+    }
+
+    private func copyCode(of block: CodeBlockInfo) {
+        let ns = string as NSString
+        guard NSMaxRange(block.contentRange) <= ns.length else { return }
+        copyPasteboard.clearContents()
+        copyPasteboard.setString(ns.substring(with: block.contentRange), forType: .string)
     }
 
     func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorageEditActions,
@@ -334,6 +382,14 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     func positionOverlays() {
         for overlay in tableOverlays { place(overlay, over: overlay.table.range, size: overlay.gridSize) }
         for overlay in imageOverlays { place(overlay, over: overlay.info.range, size: overlay.displaySize(maxWidth: tableWidth)) }
+        for (label, block) in zip(codeLabels, labeledBlocks) where !label.isHidden {
+            guard NSMaxRange(block.range) <= (textStorage?.length ?? 0),
+                  let area = hidingLayoutManager.codeBackgroundRect(of: block.range) else { continue }
+            let size = label.contentSize
+            let frame = NSRect(x: area.maxX + textContainerOrigin.x - size.width - 10, y: area.minY + textContainerOrigin.y + 7,
+                               width: size.width, height: size.height)
+            if label.frame != frame { label.frame = frame }
+        }
     }
 
     /// Puts a table or picture in the space reserved for it below its hidden source.

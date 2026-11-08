@@ -17,7 +17,7 @@ A simple, dark Markdown app for macOS, with minimal chrome. It's a calm place to
   - Solarized: IBM Plex Sans, with IBM Plex Mono code
   - Nord: Geist, with Geist Mono code
   - Terminal: JetBrains Mono throughout
-- Code blocks are syntax highlighted for about 190 languages, in each theme's colors.
+- Code blocks are syntax highlighted for about 190 languages, in each theme's colors. A block whose fence names its language shows that language and a Copy button in its corner.
 
 ## Build and run
 
