@@ -121,6 +121,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         selectedTextAttributes = [.backgroundColor: theme.line]
         hidingLayoutManager.codeBackground = theme.panel
         hidingLayoutManager.chipBackground = theme.chip
+        hidingLayoutManager.outlineColor = theme.outline
         hidingLayoutManager.ruleColor = theme.line
         hidingLayoutManager.quoteBarColor = theme.palette.quoteBar
         hidingLayoutManager.palette = theme.palette

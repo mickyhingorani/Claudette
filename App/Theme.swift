@@ -26,11 +26,13 @@ struct Palette: Equatable {
     let tag: NSColor
     let attribute: NSColor
     let type: NSColor
+    /// A Note callout's color, when a theme wants one other than its link color.
+    var note: NSColor? = nil
 
     /// Each callout kind borrows a color the theme already uses for meaning.
     func callout(_ kind: CalloutKind) -> NSColor {
         switch kind {
-        case .note: return link
+        case .note: return note ?? link
         case .tip: return check
         case .important: return emphasis
         case .warning: return strong
@@ -75,6 +77,13 @@ struct Theme: Equatable {
     let bodyFont: NSFont
     let monoFont: NSFont
     let palette: Palette
+    /// A font for big (`#`) titles, drawn at regular weight, when a theme pairs one in.
+    var titleFace: NSFont? = nil
+    /// A thin outline around inline code and code blocks, for themes that draw one.
+    var outline: NSColor? = nil
+
+    /// Big (`#`) titles: the title face if the theme has one, else the heading font.
+    var titleFont: NSFont { titleFace ?? headingFont }
 
     fileprivate static func color(_ hex: UInt32) -> NSColor {
         NSColor(srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
@@ -140,6 +149,22 @@ struct Theme: Equatable {
             keyword: color(0x859900), string: color(0x2AA198), number: color(0xE0679F), comment: color(0x657B83),
             function: color(0x4C9FDC), tag: color(0x4C9FDC), attribute: color(0xC99A10), type: color(0xE0733F)))
 
+    /// Deep teal with gold and pink, after a developer docs site Micky liked.
+    static let harbor = Theme(
+        id: "harbor", name: "Harbor",
+        background: color(0x002635), text: color(0xFFFEFF), soft: color(0xB9C4CB), dim: color(0x8093A0),
+        accent: color(0xECC271), chip: color(0x0A1E27), panel: color(0x0B2F3B), line: color(0x1E414B),
+        headingFont: font("Hanken Grotesk", size: 16), bodyFont: font("Hanken Grotesk", size: 16),
+        monoFont: font("JetBrains Mono", size: 14),
+        palette: Palette(
+            heading1: color(0xFFFEFF), heading2: color(0xF2C878), heading3: color(0xFF8FDA),
+            strong: color(0xFFFEFF), emphasis: color(0xFF8FDA), link: color(0xECC271), check: color(0xFF5ECA), inlineCode: color(0xECC271),
+            quoteBar: color(0xFF5ECA), tableHeader: color(0x0F3946), tableHeaderText: color(0xFFFEFF),
+            keyword: color(0xFF8FDA), string: color(0xC3E88D), number: color(0xF78C6C), comment: color(0x7D96A3),
+            function: color(0x82AAFF), tag: color(0x89DDFF), attribute: color(0xC792EA), type: color(0xECC271),
+            note: color(0x6CB6F0)),
+        titleFace: font("Newsreader", size: 16), outline: color(0x24505C))
+
     static let terminal = Theme(
         id: "terminal", name: "Terminal",
         background: color(0x050805), text: color(0x4DFF88), soft: color(0x3FE878), dim: color(0x2BA857),
@@ -152,7 +177,7 @@ struct Theme: Equatable {
             keyword: color(0xD6FFE4), string: color(0x9CFFBE), number: color(0x7AF0A0), comment: color(0x2BA857),
             function: color(0x4DFF88), tag: color(0xD6FFE4), attribute: color(0x7AF0A0), type: color(0x9CFFBE)))
 
-    static let all = [slate, nord, solarized, terminal]
+    static let all = [slate, nord, solarized, harbor, terminal]
     static let `default` = slate
 
     static func named(_ id: String) -> Theme { all.first { $0.id == id } ?? .default }

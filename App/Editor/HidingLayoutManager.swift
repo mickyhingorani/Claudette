@@ -58,6 +58,7 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     var pageBackground = NSColor.clear
     var codeBackground = NSColor.clear
     var chipBackground = NSColor.clear
+    var outlineColor: NSColor?
     var ruleColor = NSColor.clear
     var quoteBarColor = NSColor.clear
     var underlineColor = NSColor.clear
@@ -239,7 +240,9 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         for range in decorations.codeBlocks {
             guard fragmentsRect(of: range, showing: glyphsToShow) != nil, let rect = codeBackgroundRect(of: range) else { continue }
             codeBackground.setFill()
-            NSBezierPath(roundedRect: rect.offsetBy(dx: origin.x, dy: origin.y), xRadius: 7, yRadius: 7).fill()
+            let panel = NSBezierPath(roundedRect: rect.offsetBy(dx: origin.x, dy: origin.y).insetBy(dx: 0.5, dy: 0.5), xRadius: 7, yRadius: 7)
+            panel.fill()
+            stroke(panel)
         }
         for range in decorations.chips {
             drawChip(range, showing: glyphsToShow, at: origin)
@@ -447,8 +450,19 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         chipBackground.setFill()
         for rect in lineRects(of: range) {
             let chip = NSRect(x: rect.minX + origin.x - 3, y: rect.maxY + origin.y - 14, width: rect.width + 6, height: 19)
-            NSBezierPath(roundedRect: chip, xRadius: 4, yRadius: 4).fill()
+            let shape = NSBezierPath(roundedRect: chip.insetBy(dx: 0.5, dy: 0.5), xRadius: 4, yRadius: 4)
+            chipBackground.setFill()
+            shape.fill()
+            stroke(shape)
         }
+    }
+
+    /// Outlines a code chip or code block, in themes that draw an outline.
+    private func stroke(_ shape: NSBezierPath) {
+        guard let outlineColor else { return }
+        outlineColor.setStroke()
+        shape.lineWidth = 1
+        shape.stroke()
     }
 
     private func fragmentsRect(of range: NSRange, showing glyphsToShow: NSRange) -> NSRect? {
