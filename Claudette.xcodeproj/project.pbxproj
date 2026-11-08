@@ -27,6 +27,7 @@
 		4D34D7A9629A5055E804620B /* JetBrainsMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4BC9F1E7148162EDE1EE2D9A /* JetBrainsMono-OFL.txt */; };
 		501683150F9D895D2FBF86DE /* TableEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EBF1541FF1457E37F7A6B2 /* TableEditingTests.swift */; };
 		52385B554F5710B809F56AD6 /* Geist-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2616A19BD427A3B67AE3B94D /* Geist-OFL.txt */; };
+		5F0C9D4F9FB57904DF8AE260 /* DocumentSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0068C5EA5572C4BF41E52F1D /* DocumentSessionTests.swift */; };
 		5FE6E48ACCB163F2F5386735 /* IBMPlexSans-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = DFAB8DC78977B6E9410F8709 /* IBMPlexSans-OFL.txt */; };
 		6057C59D3A31DB3B15C67764 /* IBMPlexMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = F2D6B3B208061A672D0A4283 /* IBMPlexMono-OFL.txt */; };
 		626FDBCE484C8E2DF27BC8D3 /* ImageOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55082A4BFD3522E32AF0FDD8 /* ImageOverlayView.swift */; };
@@ -41,6 +42,7 @@
 		940FA2A577F8DBBAE5E884A7 /* GeistMono-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = E08452B54F3CA78B4D68312B /* GeistMono-Italic[wght].ttf */; };
 		9DF77424AD9ACC2E1A3B4731 /* CalloutAndCheckboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1886E3FCD8457D0D28CA0D4 /* CalloutAndCheckboxTests.swift */; };
 		AB7C88463CB6D53C8437F53D /* TypingSpeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EA10FA3D89E1E7956DEBE1 /* TypingSpeedTests.swift */; };
+		B952ED02631C9B50481FCFCE /* DocumentSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1242C3B6A98DE62F9D05E4D4 /* DocumentSession.swift */; };
 		C960C7B815F9E827E741C78E /* ClaudetteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */; };
 		CDCC06B4A619457821EB9E9C /* ImageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 940B8A35B594596B20FE853C /* ImageTests.swift */; };
 		D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */; };
@@ -67,7 +69,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0068C5EA5572C4BF41E52F1D /* DocumentSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentSessionTests.swift; sourceTree = "<group>"; };
 		0B581B0DA980BDC3A1DB2F22 /* AtkinsonHyperlegibleNext-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "AtkinsonHyperlegibleNext-Italic[wght].ttf"; sourceTree = "<group>"; };
+		1242C3B6A98DE62F9D05E4D4 /* DocumentSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentSession.swift; sourceTree = "<group>"; };
 		12A07D8B779FEAC1A331A035 /* AtkinsonHyperlegibleNext[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "AtkinsonHyperlegibleNext[wght].ttf"; sourceTree = "<group>"; };
 		18ABF5E936CFABA4FFCBE4B3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		1B7CC701012237EF000CD8E8 /* AppModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModelTests.swift; sourceTree = "<group>"; };
@@ -182,6 +186,7 @@
 				1B7CC701012237EF000CD8E8 /* AppModelTests.swift */,
 				F1886E3FCD8457D0D28CA0D4 /* CalloutAndCheckboxTests.swift */,
 				F7814F2703382C891EDDC610 /* CaretTests.swift */,
+				0068C5EA5572C4BF41E52F1D /* DocumentSessionTests.swift */,
 				96D9C0257768097483F1AE63 /* EditorTests.swift */,
 				940B8A35B594596B20FE853C /* ImageTests.swift */,
 				3326C1AE582E0280FB0122B4 /* LinkTests.swift */,
@@ -201,6 +206,7 @@
 				5B4C68877C7F157F9469B85F /* AppIcon.icon */,
 				E9715F52408350CB000B481D /* AppModel.swift */,
 				84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */,
+				1242C3B6A98DE62F9D05E4D4 /* DocumentSession.swift */,
 				55A5438F65AE9739BCE3AEE1 /* FileListView.swift */,
 				2FD423DB075FF474B94C7621 /* FolderWatcher.swift */,
 				872C2316D731CE800F69D51A /* Info.plist */,
@@ -356,6 +362,7 @@
 			files = (
 				7A79FC0F741B39CE04789344 /* AppModel.swift in Sources */,
 				C960C7B815F9E827E741C78E /* ClaudetteApp.swift in Sources */,
+				B952ED02631C9B50481FCFCE /* DocumentSession.swift in Sources */,
 				0A37619B421209992759C727 /* EditorStyler.swift in Sources */,
 				24C7F9B99A96F42B97536E06 /* EditorTextView.swift in Sources */,
 				EC9FF80388CCF0084AA008B5 /* FileListView.swift in Sources */,
@@ -377,6 +384,7 @@
 				E2B5C73FAE83CDCF10B24703 /* AppModelTests.swift in Sources */,
 				9DF77424AD9ACC2E1A3B4731 /* CalloutAndCheckboxTests.swift in Sources */,
 				F89A9C67DE2ED80C33E4E232 /* CaretTests.swift in Sources */,
+				5F0C9D4F9FB57904DF8AE260 /* DocumentSessionTests.swift in Sources */,
 				D9D1ED470E53BABC4EC71936 /* EditorTests.swift in Sources */,
 				CDCC06B4A619457821EB9E9C /* ImageTests.swift in Sources */,
 				171420B68E026CAB58506412 /* LinkTests.swift in Sources */,

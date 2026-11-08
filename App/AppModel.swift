@@ -59,16 +59,17 @@ final class AppModel: ObservableObject {
     let editor: EditorTextView
 
     private let defaults: UserDefaults
-    private var document: DocumentFile?
-    private var draftFolder: URL?
-    private var isDirty = false
+    /// The open document and the rules that keep its edits safe.
+    private var session: DocumentSession!
+    private var isDirty: Bool { session.isDirty }
     private var knownFiles: Set<URL> = []
-    private var autosave: DispatchWorkItem?
     private var watcher: FolderWatcher?
 
     init(defaults: UserDefaults, starterFolder: URL, watchesFolders: Bool) {
         self.defaults = defaults
         (scrollView, editor) = EditorTextView.makeInScrollView()
+        session = DocumentSession(autosaveDelay: Self.autosaveDelay) { [editor] in editor.textWithCellDrafts }
+        session.onAutosave = { [weak self] outcome in self?.handle(outcome) }
         themeID = defaults.string(forKey: Key.theme) ?? Theme.default.id
         viewMode = ViewMode(rawValue: defaults.string(forKey: Key.viewMode) ?? "") ?? .formatted
         if defaults.object(forKey: Key.fileListWidth) != nil {
@@ -136,7 +137,7 @@ final class AppModel: ObservableObject {
             let containing = folders.filter { currentFile.path.hasPrefix(Self.prefix(of: $0)) }
             if let deepest = containing.max(by: { $0.path.count < $1.path.count }) { return deepest }
         }
-        return draftFolder ?? folders.first
+        return session.draftFolder ?? folders.first
     }
 
     private static func folderURL(_ path: String) -> URL { URL(fileURLWithPath: path, isDirectory: true) }
@@ -158,8 +159,8 @@ final class AppModel: ObservableObject {
         if let currentFile, !isInConnectedFolder(currentFile) {
             closeDocument()
             showNextFile()
-        } else if draftFolder == folder {
-            draftFolder = folders.first
+        } else if session.draftFolder == folder {
+            session.moveDraft(to: folders.first)
         }
     }
 
@@ -211,7 +212,7 @@ final class AppModel: ObservableObject {
     /// don't rescan anything, and only folders with a change in them are rescanned.
     func filesChanged(at paths: [String]) {
         let openPath = currentFile.map { URL(fileURLWithPath: $0.path).resolvingSymlinksInPath().path }
-        let ownSave = document.map { $0.checkDisk() == .unchanged } ?? false
+        let ownSave = session.matchesDisk
         checkOpenFile()
         let relevant = paths.filter { path in
             let url = URL(fileURLWithPath: path)
@@ -243,30 +244,30 @@ final class AppModel: ObservableObject {
     }
 
     private func checkOpenFile() {
-        guard let document else { return }
+        guard session.document != nil else { return }
         if isDirty {
             saveNow()
             return
         }
-        switch document.checkDisk() {
-        case .unchanged:
-            break
-        case .changed:
-            reloadFromDisk(document)
+        switch session.checkDisk() {
+        case .reloaded(let text):
+            showReloaded(text)
         case .missing:
             closeDocument()
             scan()
             showNextFile()
+        default:
+            break
         }
     }
 
-    private func reloadFromDisk(_ document: DocumentFile) {
-        document.acceptDisk()
+    /// Shows the open file's new text from disk, keeping the caret where it was.
+    private func showReloaded(_ text: String) {
         let selection = editor.selectedRange()
-        editor.documentFolder = document.url.deletingLastPathComponent()
-        editor.load(text: document.text)
-        applyEditability(of: document)
-        let length = (document.text as NSString).length
+        editor.documentFolder = session.currentFile?.deletingLastPathComponent()
+        editor.load(text: text)
+        applyEditability()
+        let length = (text as NSString).length
         editor.setSelectedRange(NSRange(location: min(selection.location, length), length: 0))
     }
 
@@ -277,14 +278,11 @@ final class AppModel: ObservableObject {
         flush()
         guard !isDirty else { return }
         do {
-            let file = try DocumentFile(url: url)
-            document = file
-            draftFolder = nil
+            try session.open(url)
             currentFile = url
-            isDirty = false
             editor.documentFolder = url.deletingLastPathComponent()
-            editor.load(text: file.text)
-            applyEditability(of: file)
+            editor.load(text: session.document?.text ?? "")
+            applyEditability()
             unseen.remove(url)
             defaults.set(url.path, forKey: Key.lastFile)
             editor.window?.makeFirstResponder(editor)
@@ -293,9 +291,9 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func applyEditability(of file: DocumentFile) {
-        editor.isEditable = !file.isReadOnly
-        notice = file.isReadOnly ? Self.readOnlyNotice : nil
+    private func applyEditability() {
+        editor.isEditable = !session.isReadOnly
+        notice = session.isReadOnly ? Self.readOnlyNotice : nil
     }
 
     /// A linked note opens like a file picked from the list, if it exists.
@@ -311,18 +309,15 @@ final class AppModel: ObservableObject {
         flush()
         guard !isDirty, let folder = currentFolder else { return }
         closeDocument()
-        draftFolder = folder
+        session.moveDraft(to: folder)
         editor.window?.makeFirstResponder(editor)
     }
 
     private func closeDocument() {
-        autosave?.cancel()
-        document = nil
+        session.startDraft(in: folders.first)
         currentFile = nil
-        draftFolder = folders.first
-        isDirty = false
         notice = nil
-        editor.documentFolder = draftFolder
+        editor.documentFolder = session.draftFolder
         editor.load(text: "")
         editor.isEditable = true
         defaults.removeObject(forKey: Key.lastFile)
@@ -333,18 +328,14 @@ final class AppModel: ObservableObject {
         if let next = sections.lazy.compactMap({ $0.files.first }).first {
             open(next.url)
         } else {
-            draftFolder = folders.first
+            session.moveDraft(to: folders.first)
         }
     }
 
     // MARK: Saving
 
     private func textDidChange() {
-        isDirty = true
-        autosave?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.saveNow() }
-        autosave = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.autosaveDelay, execute: work)
+        session.markEdited()
     }
 
     /// Saves, and asks before quitting only if some text still couldn't be saved.
@@ -360,55 +351,34 @@ final class AppModel: ObservableObject {
     }
 
     func saveNow() {
-        autosave?.cancel()
-        guard isDirty else { return }
-        let text = editor.textWithCellDrafts
-        do {
-            if let document {
-                try saveExisting(document, text: text)
-            } else {
-                try saveDraft(text: text)
-            }
-            if notice == Self.saveFailedNotice { notice = nil }
-        } catch DocumentFile.SaveError.readOnly {
-            isDirty = false
+        handle(session.saveNow())
+    }
+
+    /// Shows what a save did.
+    private func handle(_ outcome: DocumentSession.SaveOutcome) {
+        switch outcome {
+        case .nothingToSave, .saved:
+            clearSaveFailure()
+        case .savedWithConflictCopy(let copy):
+            notice = "Changed elsewhere too: saved the other version as \(copy.lastPathComponent)"
+        case .reloaded(let text):
+            showReloaded(text)
+            clearSaveFailure()
+        case .created(let url):
+            currentFile = url
+            knownFiles.insert(url)
+            defaults.set(url.path, forKey: Key.lastFile)
+            scan()
+            clearSaveFailure()
+        case .readOnly:
             notice = Self.readOnlyNotice
-        } catch {
+        case .failed:
             notice = Self.saveFailedNotice
         }
     }
 
-    private func saveExisting(_ document: DocumentFile, text: String) throws {
-        if case .changed = document.checkDisk() {
-            if text == document.text {
-                // The edits were undone, so nothing of Micky's is at stake.
-                reloadFromDisk(document)
-                isDirty = false
-                return
-            }
-            let copy = try document.saveConflictCopy()
-            notice = "Changed elsewhere too: saved the other version as \(copy.lastPathComponent)"
-        }
-        try document.save(text)
-        isDirty = false
-    }
-
-    private func saveDraft(text: String) throws {
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            // A blank new file has nothing worth keeping.
-            isDirty = false
-            return
-        }
-        guard let folder = draftFolder ?? folders.first else { return }
-        let url = FileNaming.uniqueURL(for: FileNaming.name(fromFirstLineOf: text), in: folder)
-        try Data(text.utf8).write(to: url, options: .atomic)
-        document = try DocumentFile(url: url)
-        draftFolder = nil
-        currentFile = url
-        isDirty = false
-        knownFiles.insert(url)
-        defaults.set(url.path, forKey: Key.lastFile)
-        scan()
+    private func clearSaveFailure() {
+        if notice == Self.saveFailedNotice { notice = nil }
     }
 
     // MARK: Bringing files in
@@ -471,17 +441,11 @@ final class AppModel: ObservableObject {
 
     func rename(_ url: URL, to name: String) {
         flush()
-        var clean = name.trimmingCharacters(in: .whitespaces)
-        if clean.lowercased().hasSuffix(".md") { clean = String(clean.dropLast(3)) }
-        clean = FileNaming.name(fromFirstLineOf: clean)
-        guard clean != url.deletingPathExtension().lastPathComponent else { return }
-        let destination = FileNaming.uniqueURL(for: clean, in: url.deletingLastPathComponent())
         do {
-            try FileManager.default.moveItem(at: url, to: destination)
+            guard let destination = try session.rename(url, to: name) else { return }
             knownFiles.remove(url)
             knownFiles.insert(destination)
             if currentFile == url {
-                document?.url = destination
                 currentFile = destination
                 defaults.set(destination.path, forKey: Key.lastFile)
             }
@@ -497,8 +461,7 @@ final class AppModel: ObservableObject {
         let isCurrent = currentFile == url
         if isCurrent { flush() }
         do {
-            var trashed: NSURL?
-            try FileManager.default.trashItem(at: url, resultingItemURL: &trashed)
+            let trashed = try session.trash(url)
             knownFiles.remove(url)
             unseen.remove(url)
             scan()
@@ -506,7 +469,7 @@ final class AppModel: ObservableObject {
                 closeDocument()
                 showNextFile()
             }
-            return trashed as URL?
+            return trashed
         } catch {
             notice = "Couldn't move \(url.lastPathComponent) to the Trash"
             if isCurrent, isDirty { textDidChange() }
