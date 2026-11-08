@@ -348,6 +348,22 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(try String(contentsOf: trashed, encoding: .utf8), "ab")
     }
 
+    func testFollowingALinkToAnotherNoteOpensIt() throws {
+        let model = makeModel()
+        let first = try write("[next](Second.md)", "First.md", in: starter)
+        let second = try write("two", "Second.md", in: starter)
+        model.refresh()
+        model.open(first)
+        model.editor.followLink("Second.md")
+        XCTAssertEqual(model.currentFile, second)
+    }
+
+    func testARefusedLinkSaysWhy() throws {
+        let model = makeModel()
+        model.editor.followLink("ssh://server")
+        XCTAssertNotNil(model.notice)
+    }
+
     func testStateRestoredOnRelaunch() throws {
         let project = try folder("Project")
         let file = try write("x", "a.md", in: project)

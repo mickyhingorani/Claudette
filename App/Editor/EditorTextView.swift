@@ -21,6 +21,23 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     private(set) var imageOverlays: [ImageOverlayView] = []
     /// The folder of the open file, for image paths written relative to it.
     var documentFolder: URL?
+
+    /// Opens Markdown files linked from the document.
+    var onOpenDocument: ((URL) -> Void)?
+    /// Told about a link Claudette won't open, such as a script or another app.
+    var onRefusedLink: ((String) -> Void)?
+    var openExternally: (URL) -> Void = { NSWorkspace.shared.open($0) }
+
+    /// ⌘-click on a link: web and email links open outside, Markdown files open here,
+    /// and anything else, like an app or a script, is refused.
+    func followLink(_ link: String) {
+        switch LinkTarget.resolve(link, relativeTo: documentFolder) {
+        case .external(let url): openExternally(url)
+        case .document(let url): onOpenDocument?(url)
+        case .none: break
+        case .refused: onRefusedLink?(link)
+        }
+    }
     var imageLoader = ImageLoader.shared {
         didSet { observeImageLoader() }
     }
@@ -645,9 +662,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         let point = convert(event.locationInWindow, from: nil)
         if let index = characterIndex(at: point), let storage = textStorage, index < storage.length {
             if event.modifierFlags.contains(.command),
-               let value = storage.attribute(.claudetteURL, at: index, effectiveRange: nil) as? String,
-               let url = URL(string: value) {
-                NSWorkspace.shared.open(url)
+               let value = storage.attribute(.claudetteURL, at: index, effectiveRange: nil) as? String {
+                followLink(value)
                 return
             }
             if viewMode == .formatted, hidingLayoutManager.substitutions[index] != nil,

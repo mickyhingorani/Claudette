@@ -12,6 +12,7 @@
 		0A45766E1BB3DA9C8E76E5F1 /* GeistMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 411D6E3AEF8DA821FDFC63BD /* GeistMono-OFL.txt */; };
 		0D45AB81AA2BDC6A5D6851B5 /* ParagraphTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B17989DDD758FF6619372CD3 /* ParagraphTests.swift */; };
 		0E38A23CEDA871AB4BA2496A /* Geist-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5EE10C310B2B43A4ED85F341 /* Geist-Italic[wght].ttf */; };
+		171420B68E026CAB58506412 /* LinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3326C1AE582E0280FB0122B4 /* LinkTests.swift */; };
 		1E007A53D7E04A3F1625C2A9 /* IBMPlexMono-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8FA0DA4D86C871865A0A6AF1 /* IBMPlexMono-Italic.ttf */; };
 		1FA4279C34C5C46E5627DCB1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4819C256EEBDE1176786EA4 /* Theme.swift */; };
 		211D2E2EF3388BCB14B53A6E /* IBMPlexMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A6F47EA458A587DE658DA260 /* IBMPlexMono-Regular.ttf */; };
@@ -76,6 +77,7 @@
 		2AD2D3024694420D4879750F /* JetBrainsMono-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-Italic[wght].ttf"; sourceTree = "<group>"; };
 		2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealPathTests.swift; sourceTree = "<group>"; };
 		2FD423DB075FF474B94C7621 /* FolderWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderWatcher.swift; sourceTree = "<group>"; };
+		3326C1AE582E0280FB0122B4 /* LinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkTests.swift; sourceTree = "<group>"; };
 		411D6E3AEF8DA821FDFC63BD /* GeistMono-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "GeistMono-OFL.txt"; sourceTree = "<group>"; };
 		42254BC4ECD9559141DF391B /* AtkinsonHyperlegibleNext-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "AtkinsonHyperlegibleNext-OFL.txt"; sourceTree = "<group>"; };
 		438CCFB4AD275C881EC89E07 /* GeistMono[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GeistMono[wght].ttf"; sourceTree = "<group>"; };
@@ -182,6 +184,7 @@
 				F7814F2703382C891EDDC610 /* CaretTests.swift */,
 				96D9C0257768097483F1AE63 /* EditorTests.swift */,
 				940B8A35B594596B20FE853C /* ImageTests.swift */,
+				3326C1AE582E0280FB0122B4 /* LinkTests.swift */,
 				B17989DDD758FF6619372CD3 /* ParagraphTests.swift */,
 				2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */,
 				D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */,
@@ -376,6 +379,7 @@
 				F89A9C67DE2ED80C33E4E232 /* CaretTests.swift in Sources */,
 				D9D1ED470E53BABC4EC71936 /* EditorTests.swift in Sources */,
 				CDCC06B4A619457821EB9E9C /* ImageTests.swift in Sources */,
+				171420B68E026CAB58506412 /* LinkTests.swift in Sources */,
 				0D45AB81AA2BDC6A5D6851B5 /* ParagraphTests.swift in Sources */,
 				415A729A4D294FA3888AB804 /* RealPathTests.swift in Sources */,
 				D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */,

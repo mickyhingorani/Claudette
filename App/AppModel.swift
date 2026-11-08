@@ -77,6 +77,10 @@ final class AppModel: ObservableObject {
         editor.theme = theme
         editor.viewMode = viewMode
         editor.onTextChange = { [weak self] _ in self?.textDidChange() }
+        editor.onOpenDocument = { [weak self] url in self?.openLinked(url) }
+        editor.onRefusedLink = { [weak self] _ in
+            self?.notice = "Claudette opens only web, email and Markdown links"
+        }
         editor.onDropURLs = { [weak self] urls in self?.handleDrop(urls, into: nil) }
 
         if let stored = defaults.stringArray(forKey: Key.folders) {
@@ -247,6 +251,15 @@ final class AppModel: ObservableObject {
     private func applyEditability(of file: DocumentFile) {
         editor.isEditable = !file.isReadOnly
         notice = file.isReadOnly ? Self.readOnlyNotice : nil
+    }
+
+    /// A linked note opens like a file picked from the list, if it exists.
+    private func openLinked(_ url: URL) {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            notice = "Couldn't find \(url.lastPathComponent)"
+            return
+        }
+        open(url)
     }
 
     func newFile() {
