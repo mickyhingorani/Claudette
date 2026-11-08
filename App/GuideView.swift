@@ -37,7 +37,7 @@ struct GuideView: View {
             }
         }
         .frame(width: 320)
-        .background(Color(nsColor: theme.panel))
+        .background(Color(nsColor: theme.sidePanel))
         .overlay(alignment: .leading) {
             Rectangle().fill(Color(nsColor: theme.line)).frame(width: 1)
         }

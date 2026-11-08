@@ -19,6 +19,12 @@ struct RootView: View {
                 if model.isFileListOpen {
                     FileListView(model: model)
                         .frame(width: model.fileListWidth)
+                        .overlay(alignment: .trailing) {
+                            // A panel the same color as the page needs a line to end it.
+                            if theme.sidePanel == theme.background {
+                                Rectangle().fill(Color(nsColor: theme.line)).frame(width: 1)
+                            }
+                        }
                         .overlay(alignment: .trailing) { resizeHandle }
                         .transition(.move(edge: .leading))
                 }
@@ -32,6 +38,7 @@ struct RootView: View {
         }
         .background(Color(nsColor: theme.background))
         .ignoresSafeArea()
+        .preferredColorScheme(theme.colorScheme)
         .animation(.easeInOut(duration: 0.22), value: model.isFileListOpen)
         .animation(.easeInOut(duration: 0.22), value: model.isGuideOpen)
         .frame(minWidth: 480, minHeight: 360)

@@ -15,11 +15,12 @@ For what's been built and what's next, see the [roadmap](docs/roadmap.md).
 - Open a Markdown file from anywhere (`⌘O`, Finder's Open With, or drag it onto the window) and it's edited where it is, without connecting its folder. Recently opened files are listed at the top of the file list.
 - Import files to copy them into a connected folder, or drag them onto a folder's section. Drag a folder in to connect it.
 - Edits save automatically.
-- Four themes, each with its own colors and fonts:
+- Six themes, each with its own colors and fonts. [docs/themes.md](docs/themes.md) shows each one with every font and color:
   - Slate (the default): Atkinson Hyperlegible Next, with JetBrains Mono code
   - Solarized: IBM Plex Sans, with IBM Plex Mono code
   - Nord: Geist, with Geist Mono code
   - Harbor: deep teal with gold and pink; Newsreader titles, Hanken Grotesk text, JetBrains Mono code
+  - Harbor Light: Harbor's light twin, on warm paper with teal and pink
   - Terminal: JetBrains Mono throughout
 - Code blocks are syntax highlighted for about 190 languages, in each theme's colors. A block whose fence names its language shows that language and a Copy button in its corner.
 

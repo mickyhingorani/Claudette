@@ -118,7 +118,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         backgroundColor = theme.background
         drawsBackground = true
         insertionPointColor = theme.accent
-        selectedTextAttributes = [.backgroundColor: theme.line]
+        selectedTextAttributes = [.backgroundColor: theme.selection]
         hidingLayoutManager.codeBackground = theme.panel
         hidingLayoutManager.chipBackground = theme.chip
         hidingLayoutManager.outlineColor = theme.outline
