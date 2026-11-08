@@ -17,6 +17,7 @@ Micky gets Markdown files from Claude and wanted a calm place on the Mac to read
 | [#5](https://github.com/mickyhingorani/Claudette/pull/5) | 8 Nov | A language label and Copy button on code blocks |
 | [#6](https://github.com/mickyhingorani/Claudette/pull/6) | 8 Nov | Opening a Markdown file from anywhere, in place, with an "Opened files" list |
 | [#7](https://github.com/mickyhingorani/Claudette/pull/7) | 8 Nov | Emoji and symbols draw again; this roadmap and `CLAUDE.md` |
+| [#8](https://github.com/mickyhingorani/Claudette/pull/8) | 8 Nov | The Harbor theme: deep teal, gold and pink, serif titles, a blue Note callout, outlined code |
 
 Decisions along the way:
 - **Folder app, not library app.** Claudette works on folders and files where they are, and keeps no private copy. A write-up of the two approaches is in the design document.
@@ -44,7 +45,7 @@ The code is on `main`, and 538 tests pass. The app runs from Xcode's build folde
 
 ## What's next
 
-In progress: the Harbor theme, on `claude/harbor-theme`. Saved for later, roughly in order of usefulness:
+Nothing is in progress. Saved for later, roughly in order of usefulness:
 
 1. **Two bugs you could hit in normal use:**
    - Clicking the file that's already open clears its undo history and jumps to the top.
