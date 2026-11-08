@@ -43,6 +43,23 @@ public final class CodeHighlighter {
         return result
     }
 
+    /// Names where highlight.js's own reads badly as a label: its HTML grammar is "HTML, XML".
+    private static let nameOverrides = ["html": "HTML", "xhtml": "HTML", "htm": "HTML", "xml": "XML", "svg": "SVG", "plaintext": "Text", "text": "Text", "txt": "Text"]
+
+    /// The language's proper name for a code block's label, like "JavaScript" for `js`.
+    /// A language highlight.js doesn't know keeps the name as written; a blank one has none.
+    public func displayName(for language: String) -> String? {
+        let key = language.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !key.isEmpty else { return nil }
+        if let name = Self.nameOverrides[key] { return name }
+        guard let engine = loadEngine(),
+              let definition = engine.invokeMethod("getLanguage", withArguments: [key]), definition.isObject,
+              let name = definition.objectForKeyedSubscript("name"), name.isString else {
+            return language.trimmingCharacters(in: .whitespaces)
+        }
+        return name.toString()
+    }
+
     /// How many guesses have run, so callers can check they aren't guessing on every keystroke.
     public private(set) var guessCount = 0
 

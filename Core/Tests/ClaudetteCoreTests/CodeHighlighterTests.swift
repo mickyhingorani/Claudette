@@ -97,3 +97,24 @@ import Testing
         #expect(CodeHighlighter.shared.guessLanguage(in: "") == "plaintext")
     }
 }
+
+@MainActor
+@Suite struct LanguageNameTests {
+    @Test func shortNamesBecomeFullNames() {
+        let names = ["js", "py", "html", "css", "ts", "json", "sh"].map { CodeHighlighter.shared.displayName(for: $0) }
+        #expect(names == ["JavaScript", "Python", "HTML", "CSS", "TypeScript", "JSON", "Bash"])
+        #expect(CodeHighlighter.shared.displayName(for: "xml") == "XML")
+    }
+
+    @Test func caseDoesNotMatter() {
+        #expect(CodeHighlighter.shared.displayName(for: "JS") == "JavaScript")
+    }
+
+    @Test func unknownLanguageKeepsWhatWasWritten() {
+        #expect(CodeHighlighter.shared.displayName(for: "mermaid") == "mermaid")
+    }
+
+    @Test func blankLanguageHasNoName() {
+        #expect(CodeHighlighter.shared.displayName(for: "  ") == nil)
+    }
+}
