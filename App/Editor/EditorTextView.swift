@@ -251,8 +251,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
                 tableOverlays.append(overlay)
             }
         }
-        let reserved = zip(tables, tableOverlays).map { (range: $0.range, height: $1.gridSize.height) }
-        hidingLayoutManager.setReservedTables(reserved, invalidate: invalidate)
+        let reserved = zip(tables, tableOverlays).map { HidingLayoutManager.ReservedBlock(range: $0.range, height: $1.gridSize.height) }
+        hidingLayoutManager.setReserved(reserved, for: .table, invalidate: invalidate)
     }
 
     // MARK: Images
@@ -295,8 +295,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
                 self.setSelectedRange(NSRange(location: NSMaxRange(overlay.info.range), length: 0))
             }
         }
-        let reserved = imageOverlays.map { (range: $0.info.range, height: $0.displaySize(maxWidth: tableWidth).height) }
-        hidingLayoutManager.setReservedImages(reserved, invalidate: invalidate)
+        let reserved = imageOverlays.map { HidingLayoutManager.ReservedBlock(range: $0.info.range, height: $0.displaySize(maxWidth: tableWidth).height) }
+        hidingLayoutManager.setReserved(reserved, for: .image, invalidate: invalidate)
         // While typing, web pictures wait until the address stops changing.
         if !invalidate, !images.isEmpty { scheduleImageLoading() }
     }
@@ -330,25 +330,19 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     }
 
     func positionOverlays() {
-        guard let layout = layoutManager, let storage = textStorage else { return }
-        for overlay in tableOverlays where NSMaxRange(overlay.table.range) <= storage.length {
-            let glyph = layout.glyphIndexForCharacter(at: overlay.table.range.location)
-            let rect = layout.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
-            let padding = textContainer?.lineFragmentPadding ?? 0
-            let frame = NSRect(x: rect.minX + textContainerOrigin.x + padding, y: rect.minY + textContainerOrigin.y + hidingLayoutManager.tableOffset(at: overlay.table.range.location),
-                               width: overlay.gridSize.width, height: overlay.gridSize.height)
-            if overlay.frame != frame { overlay.frame = frame }
-        }
-        for overlay in imageOverlays where NSMaxRange(overlay.info.range) <= storage.length && overlay.info.range.length > 0 {
-            let glyph = layout.glyphIndexForCharacter(at: NSMaxRange(overlay.info.range) - 1)
-            let rect = layout.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
-            let padding = textContainer?.lineFragmentPadding ?? 0
-            let size = overlay.displaySize(maxWidth: tableWidth)
-            let frame = NSRect(x: rect.minX + textContainerOrigin.x + padding,
-                               y: rect.minY + textContainerOrigin.y + hidingLayoutManager.imageOffset(at: overlay.info.range.location),
-                               width: size.width, height: size.height)
-            if overlay.frame != frame { overlay.frame = frame }
-        }
+        for overlay in tableOverlays { place(overlay, over: overlay.table.range, size: overlay.gridSize) }
+        for overlay in imageOverlays { place(overlay, over: overlay.info.range, size: overlay.displaySize(maxWidth: tableWidth)) }
+    }
+
+    /// Puts a table or picture in the space reserved for it below its hidden source.
+    private func place(_ view: NSView, over range: NSRange, size: NSSize) {
+        guard let layout = layoutManager, let storage = textStorage, range.length > 0, NSMaxRange(range) <= storage.length else { return }
+        let rect = layout.lineFragmentRect(forGlyphAt: layout.glyphIndexForCharacter(at: NSMaxRange(range) - 1), effectiveRange: nil)
+        let padding = textContainer?.lineFragmentPadding ?? 0
+        let frame = NSRect(x: rect.minX + textContainerOrigin.x + padding,
+                           y: rect.minY + textContainerOrigin.y + hidingLayoutManager.blockOffset(at: range.location),
+                           width: size.width, height: size.height)
+        if view.frame != frame { view.frame = frame }
     }
 
     override func viewWillDraw() {

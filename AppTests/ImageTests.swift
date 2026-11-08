@@ -122,6 +122,17 @@ final class ImageTests: XCTestCase {
         XCTAssertLessThan(after - image.frame.maxY, 40, "no extra picture-sized gap below")
     }
 
+    func testRemovedImageLeavesNoStaleOffset() throws {
+        try picture("pic.png", width: 120, height: 60)
+        let editor = makeEditor("a\n\n![x](pic.png)\n")
+        editor.setSelectedRange(NSRange(location: 8, length: 0))
+        editor.hidingLayoutManager.ensureLayout(for: editor.textContainer!)
+        XCTAssertGreaterThan(editor.hidingLayoutManager.blockOffset(at: 3), 0)
+        editor.applyEdit(NSRange(location: 1, length: 15), "")
+        editor.hidingLayoutManager.ensureLayout(for: editor.textContainer!)
+        XCTAssertEqual(editor.hidingLayoutManager.blockOffset(at: 3), 0)
+    }
+
     func testClickingAnImageShowsItsSource() throws {
         try picture("pic.png", width: 120, height: 60)
         let editor = makeEditor("a\n\n![x](pic.png)\n")

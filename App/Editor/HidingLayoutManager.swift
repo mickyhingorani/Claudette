@@ -33,11 +33,21 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     private(set) var substitutions: [Int: Character] = [:]
     var decorations = EditorDecorations()
     /// Tables drawn over hidden source, as the source range and the height to reserve.
-    private(set) var reservedTables: [(range: NSRange, height: CGFloat)] = []
-    private var tableOffsets: [Int: CGFloat] = [:]
-    /// Pictures drawn over block image lines, as the image source range and the picture's height.
-    private(set) var reservedImages: [(range: NSRange, height: CGFloat)] = []
-    private var imageOffsets: [Int: CGFloat] = [:]
+    /// Something drawn over hidden source, like a table or a picture: the source's range,
+    /// and the height to leave for it below the line holding the source's end.
+    struct ReservedBlock: Equatable {
+        var range: NSRange
+        var height: CGFloat
+    }
+
+    enum BlockKind {
+        case table, image
+    }
+
+    private var reserved: [BlockKind: [ReservedBlock]] = [:]
+    /// How far below its line's top each block starts, by where its source starts.
+    private var blockOffsets: [Int: CGFloat] = [:]
+    private var reservedBlocks: [ReservedBlock] { (reserved[.table] ?? []) + (reserved[.image] ?? []) }
     /// Clears the code background, which reaches past the block's last line.
     private static let spaceBelowCode: CGFloat = 10
     /// The space after a paragraph, shown in place of the hidden blank line that ends it.
@@ -95,26 +105,22 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         }
     }
 
-    func setReservedTables(_ tables: [(range: NSRange, height: CGFloat)], invalidate: Bool) {
-        let changed = tables.map(\.height) != reservedTables.map(\.height)
-        reservedTables = tables
-        guard invalidate, changed, let length = textStorage?.length else { return }
-        for table in tables where NSMaxRange(table.range) <= length {
-            invalidateLayout(forCharacterRange: table.range, actualCharacterRange: nil)
+    /// Pass `invalidate: false` from inside text storage editing, where layout is redone anyway.
+    func setReserved(_ blocks: [ReservedBlock], for kind: BlockKind, invalidate: Bool) {
+        let old = reserved[kind] ?? []
+        guard blocks != old else { return }
+        reserved[kind] = blocks
+        let starts = Set(reservedBlocks.map(\.range.location))
+        blockOffsets = blockOffsets.filter { starts.contains($0.key) }
+        guard invalidate, let length = textStorage?.length else { return }
+        for block in old + blocks where NSMaxRange(block.range) <= length {
+            invalidateLayout(forCharacterRange: block.range, actualCharacterRange: nil)
         }
     }
 
-    func setReservedImages(_ images: [(range: NSRange, height: CGFloat)], invalidate: Bool) {
-        let changed = images.map(\.height) != reservedImages.map(\.height) || images.map(\.range) != reservedImages.map(\.range)
-        reservedImages = images
-        guard invalidate, changed, let length = textStorage?.length else { return }
-        for image in images where NSMaxRange(image.range) <= length {
-            invalidateLayout(forCharacterRange: image.range, actualCharacterRange: nil)
-        }
-    }
-
-    /// How far below its line fragment's top a picture starts: below its source while that shows.
-    func imageOffset(at location: Int) -> CGFloat { imageOffsets[location] ?? 0 }
+    /// How far below its line fragment's top a block starts: below any text sharing its line,
+    /// or below its source while that shows.
+    func blockOffset(at location: Int) -> CGFloat { blockOffsets[location] ?? 0 }
 
     func layoutManager(_ layoutManager: NSLayoutManager,
                        shouldSetLineFragmentRect lineFragmentRect: UnsafeMutablePointer<NSRect>,
@@ -128,24 +134,17 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         let belowParagraph = endsParagraph(characters) ? paragraphGap : 0
         let belowCallout = endsCallout(characters) ? Self.spaceBelowCallout : 0
         let spaceBelow = max(belowCode, belowParagraph, belowCallout)
-        // The picture goes below the line holding the source's end, which may have wrapped.
-        if let image = reservedImages.first(where: { $0.range.length > 0 && NSLocationInRange(NSMaxRange($0.range) - 1, characters) }) {
-            let showsSource = !hidden.contains(image.range.location)
-            let textHeight = showsSource || characters.location < image.range.location ? lineFragmentRect.pointee.height : 0
-            imageOffsets[image.range.location] = textHeight
-            lineFragmentRect.pointee.size.height = textHeight + image.height + spaceBelow
-            return true
-        }
-        guard let table = reservedTables.first(where: { NSIntersectionRange($0.range, characters).length > 0 }) else {
+        // A block goes below the line holding its source's end, which may have wrapped.
+        guard let block = reservedBlocks.first(where: { $0.range.length > 0 && NSLocationInRange(NSMaxRange($0.range) - 1, characters) }) else {
             lineFragmentRect.pointee.size.height += spaceBelow
             return true
         }
-        // Hidden text at a line start joins the line before, so a table can share a fragment
-        // with the text above it. The table then goes below that text.
-        let textHeight = characters.location < table.range.location ? lineFragmentRect.pointee.height : 0
-        tableOffsets[table.range.location] = textHeight
+        // It goes below any text on that line, including its own source while that shows.
+        let showsSource = !hidden.contains(block.range.location)
+        let textHeight = showsSource || characters.location < block.range.location ? lineFragmentRect.pointee.height : 0
+        blockOffsets[block.range.location] = textHeight
         // Only the full rect grows: the caret takes its height from the used rect.
-        lineFragmentRect.pointee.size.height = textHeight + table.height + spaceBelow
+        lineFragmentRect.pointee.size.height = textHeight + block.height + spaceBelow
         return true
     }
 
@@ -191,8 +190,6 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         super.setExtraLineFragmentRect(fragmentRect, usedRect: used, textContainer: container)
     }
 
-    /// How far below its line fragment's top a table starts.
-    func tableOffset(at location: Int) -> CGFloat { tableOffsets[location] ?? 0 }
 
     func layoutManager(_ layoutManager: NSLayoutManager,
                        shouldGenerateGlyphs glyphs: UnsafePointer<CGGlyph>,
