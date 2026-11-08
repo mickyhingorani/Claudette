@@ -11,6 +11,13 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     var onTextChange: ((String) -> Void)?
     var onDropURLs: (([URL]) -> Void)?
     private(set) var tableOverlays: [TableOverlayView] = []
+
+    override var isEditable: Bool {
+        didSet {
+            tableOverlays.forEach { $0.isEditable = isEditable }
+            if !isEditable { tableOverlays.forEach { $0.discardEditing() } }
+        }
+    }
     private(set) var imageOverlays: [ImageOverlayView] = []
     /// The folder of the open file, for image paths written relative to it.
     var documentFolder: URL?
@@ -213,6 +220,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
                 tableOverlays[index].update(table: table, theme: theme, width: tableWidth)
             } else {
                 let overlay = TableOverlayView(table: table, theme: theme, width: tableWidth)
+                overlay.isEditable = isEditable
                 overlay.onEdits = { [weak self] edits in self?.applyEdits(edits) }
                 overlay.onDraftChange = { [weak self] in
                     guard let self else { return }

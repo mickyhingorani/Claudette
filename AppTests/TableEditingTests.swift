@@ -89,6 +89,24 @@ final class TableEditingTests: XCTestCase {
         XCTAssertEqual(editor.selectedRange().location, tableStart - 2)
     }
 
+    func testReadOnlyFileOpensNoCells() throws {
+        let editor = makeEditor(text)
+        editor.isEditable = false
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        overlay.beginEditing(row: 1, column: 0)
+        XCTAssertNil(overlay.editingCell)
+        XCTAssertNil(overlay.menu(for: NSEvent()))
+    }
+
+    func testFileBecomingEditableOpensCellsAgain() throws {
+        let editor = makeEditor(text)
+        editor.isEditable = false
+        editor.isEditable = true
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        overlay.beginEditing(row: 1, column: 0)
+        XCTAssertNotNil(overlay.editingCell)
+    }
+
     func testCellEditChangesOnlyThatCell() throws {
         let editor = makeEditor(text)
         let overlay = try XCTUnwrap(editor.tableOverlays.first)

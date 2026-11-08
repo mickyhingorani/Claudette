@@ -16,6 +16,8 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     private var field: NSTextField?
     var editingField: NSTextField? { field }
     private(set) var editingCell: (row: Int, column: Int)?
+    /// Off for a read-only file: cells don't open and the row and column menu doesn't appear.
+    var isEditable = true
 
     var onEdits: (([TextEdit]) -> Void)?
     var onFinishEditing: (() -> Void)?
@@ -196,6 +198,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     }
 
     func beginEditing(row: Int, column: Int) {
+        guard isEditable else { return }
         editingCell = (row, column)
         let field = NSTextField(string: table.cell(row: row, column: column).displayText)
         field.isBordered = false
@@ -315,6 +318,7 @@ final class TableOverlayView: NSView, NSTextFieldDelegate {
     // MARK: Menu
 
     override func menu(for event: NSEvent) -> NSMenu? {
+        guard isEditable else { return nil }
         // An open cell's position would go stale if a row or column changes under it.
         commitCurrentEdit()
         guard let target = cell(at: convert(event.locationInWindow, from: nil)) else { return nil }
