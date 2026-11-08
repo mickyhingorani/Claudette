@@ -11,6 +11,13 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     var onTextChange: ((String) -> Void)?
     var onDropURLs: (([URL]) -> Void)?
     private(set) var tableOverlays: [TableOverlayView] = []
+    private(set) var imageOverlays: [ImageOverlayView] = []
+    /// The folder of the open file, for image paths written relative to it.
+    var documentFolder: URL?
+    var imageLoader = ImageLoader.shared {
+        didSet { observeImageLoader() }
+    }
+    private var imageObserver: NSObjectProtocol?
 
     var hidingLayoutManager: HidingLayoutManager { layoutManager as! HidingLayoutManager }
 
@@ -90,6 +97,8 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         hidingLayoutManager.chipBackground = theme.chip
         hidingLayoutManager.ruleColor = theme.line
         hidingLayoutManager.quoteBarColor = theme.palette.quoteBar
+        hidingLayoutManager.palette = theme.palette
+        hidingLayoutManager.pageBackground = theme.background
         hidingLayoutManager.underlineColor = theme.palette.link
         hidingLayoutManager.strikeColor = theme.soft
     }
@@ -140,14 +149,16 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     func load(text: String) {
         guard let storage = textStorage else { return }
         tableOverlays.forEach { $0.discardEditing() }
+        styler.forgetGuessedLanguages()
         documentUndo.disableUndoRegistration()
         storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: text)
         documentUndo.enableUndoRegistration()
         documentUndo.removeAllActions()
         setSelectedRange(NSRange(location: 0, length: 0))
         isFreshlyLoaded = true
+        syncImages(invalidate: true)
         refreshDisplay()
-        positionTableOverlays()
+        positionOverlays()
     }
 
     func restyle() {
@@ -158,15 +169,16 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         storage.endEditing()
         typingAttributes = styler.typingAttributes
         syncTables(invalidate: true)
+        syncImages(invalidate: true)
         refreshDisplay()
-        positionTableOverlays()
+        positionOverlays()
         needsDisplay = true
     }
 
     private func refreshDisplay(invalidate: Bool = true) {
         let selection = isFreshlyLoaded ? NSRange(location: NSNotFound, length: 0) : selectedRange()
         let display = styler.display(selection: selection)
-        hidingLayoutManager.decorations = styler.decorations
+        hidingLayoutManager.decorations = styler.decorations(selection: selection)
         hidingLayoutManager.emptyLineFont = styler.emptyLineFont
         hidingLayoutManager.paragraphGap = styler.paragraphGap
         hidingLayoutManager.setDisplay(hidden: display.hidden, substitutions: display.substitutions, invalidate: invalidate)
@@ -178,6 +190,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         styler.rescan(textStorage.string)
         styler.apply(to: textStorage)
         syncTables(invalidate: false)
+        syncImages(invalidate: false)
         refreshDisplay(invalidate: false)
     }
 
@@ -217,6 +230,65 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         hidingLayoutManager.setReservedTables(reserved, invalidate: invalidate)
     }
 
+    // MARK: Images
+
+    private func observeImageLoader() {
+        if let imageObserver { NotificationCenter.default.removeObserver(imageObserver) }
+        imageObserver = NotificationCenter.default.addObserver(forName: ImageLoader.didLoad, object: imageLoader, queue: nil) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.textStorage != nil else { return }
+                self.syncImages(invalidate: true)
+                self.positionOverlays()
+            }
+        }
+    }
+
+    /// Matches picture views to the block images in the text.
+    private func syncImages(invalidate: Bool) {
+        if imageObserver == nil { observeImageLoader() }
+        let images = viewMode == .formatted ? styler.map.images.filter(\.isBlock) : []
+        while imageOverlays.count > images.count {
+            imageOverlays.removeLast().removeFromSuperview()
+        }
+        for (index, info) in images.enumerated() {
+            var picture: NSImage?
+            if let url = ImageLoader.url(for: info.source, relativeTo: documentFolder),
+               case .loaded(let image) = imageLoader.state(for: url, startLoading: invalidate) {
+                picture = image
+            }
+            if index < imageOverlays.count {
+                imageOverlays[index].update(info: info, image: picture, theme: theme)
+            } else {
+                let overlay = ImageOverlayView(info: info, image: picture, theme: theme)
+                addSubview(overlay)
+                imageOverlays.append(overlay)
+            }
+            let overlay = imageOverlays[index]
+            overlay.onClick = { [weak self, weak overlay] in
+                guard let self, let overlay else { return }
+                self.window?.makeFirstResponder(self)
+                self.setSelectedRange(NSRange(location: NSMaxRange(overlay.info.range), length: 0))
+            }
+        }
+        let reserved = imageOverlays.map { (range: $0.info.range, height: $0.displaySize(maxWidth: tableWidth).height) }
+        hidingLayoutManager.setReservedImages(reserved, invalidate: invalidate)
+        // While typing, web pictures wait until the address stops changing.
+        if !invalidate, !images.isEmpty { scheduleImageLoading() }
+    }
+
+    private var imageLoadTimer: Timer?
+
+    private func scheduleImageLoading() {
+        imageLoadTimer?.invalidate()
+        imageLoadTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.textStorage != nil else { return }
+                self.syncImages(invalidate: true)
+                self.positionOverlays()
+            }
+        }
+    }
+
     func commitCellEdits() {
         tableOverlays.forEach { $0.commitCurrentEdit() }
     }
@@ -232,7 +304,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         return text as String
     }
 
-    func positionTableOverlays() {
+    func positionOverlays() {
         guard let layout = layoutManager, let storage = textStorage else { return }
         for overlay in tableOverlays where NSMaxRange(overlay.table.range) <= storage.length {
             let glyph = layout.glyphIndexForCharacter(at: overlay.table.range.location)
@@ -242,10 +314,20 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
                                width: overlay.gridSize.width, height: overlay.gridSize.height)
             if overlay.frame != frame { overlay.frame = frame }
         }
+        for overlay in imageOverlays where NSMaxRange(overlay.info.range) <= storage.length && overlay.info.range.length > 0 {
+            let glyph = layout.glyphIndexForCharacter(at: NSMaxRange(overlay.info.range) - 1)
+            let rect = layout.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
+            let padding = textContainer?.lineFragmentPadding ?? 0
+            let size = overlay.displaySize(maxWidth: tableWidth)
+            let frame = NSRect(x: rect.minX + textContainerOrigin.x + padding,
+                               y: rect.minY + textContainerOrigin.y + hidingLayoutManager.imageOffset(at: overlay.info.range.location),
+                               width: size.width, height: size.height)
+            if overlay.frame != frame { overlay.frame = frame }
+        }
     }
 
     override func viewWillDraw() {
-        positionTableOverlays()
+        positionOverlays()
         super.viewWillDraw()
     }
 
@@ -360,12 +442,17 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
     }
 
     override func setFrameSize(_ newSize: NSSize) {
+        // The view also grows taller as text is typed; only a new width changes what fits.
+        let widthChanged = newSize.width != frame.width
         super.setFrameSize(newSize)
         let side = max(28, (newSize.width - Self.columnWidth) / 2)
         if textContainerInset.width != side {
             textContainerInset = NSSize(width: side, height: 14)
         }
-        if textStorage != nil, layoutManager != nil { syncTables(invalidate: true) }
+        if widthChanged, textStorage != nil, layoutManager != nil {
+            syncTables(invalidate: true)
+            syncImages(invalidate: true)
+        }
     }
 
     // MARK: Editing commands

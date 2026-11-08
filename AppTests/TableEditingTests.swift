@@ -11,7 +11,7 @@ final class TableEditingTests: XCTestCase {
         let (_, editor) = EditorTextView.makeInScrollView()
         editor.setFrameSize(NSSize(width: width, height: 600))
         editor.load(text: text)
-        editor.positionTableOverlays()
+        editor.positionOverlays()
         return editor
     }
 
@@ -167,7 +167,7 @@ final class TableEditingTests: XCTestCase {
         scroll.frame = NSRect(x: 0, y: 0, width: 800, height: 600)
         editor.setFrameSize(NSSize(width: 800, height: 600))
         editor.load(text: text)
-        editor.positionTableOverlays()
+        editor.positionOverlays()
         window.makeFirstResponder(editor)
         return (window, editor)
     }

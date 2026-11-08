@@ -85,3 +85,15 @@ import Testing
         #expect(CodeHighlighter.shared.tokens(in: String(repeating: "a ", count: 100_000), language: "js").isEmpty)
     }
 }
+
+@MainActor
+@Suite struct LanguageGuessTests {
+    @Test func guessesTheLanguageOfUnlabeledCode() {
+        let guess = CodeHighlighter.shared.guessLanguage(in: "<!DOCTYPE html>\n<html>\n  <body>\n    <p class=\"note\">Hi</p>\n  </body>\n</html>\n")
+        #expect(guess != "plaintext", "guessed \(guess)")
+    }
+
+    @Test func guessingNothingSaysPlainText() {
+        #expect(CodeHighlighter.shared.guessLanguage(in: "") == "plaintext")
+    }
+}

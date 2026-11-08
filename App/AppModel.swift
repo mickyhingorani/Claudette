@@ -214,6 +214,7 @@ final class AppModel: ObservableObject {
     private func reloadFromDisk(_ document: DocumentFile) {
         document.acceptDisk()
         let selection = editor.selectedRange()
+        editor.documentFolder = document.url.deletingLastPathComponent()
         editor.load(text: document.text)
         applyEditability(of: document)
         let length = (document.text as NSString).length
@@ -232,6 +233,7 @@ final class AppModel: ObservableObject {
             draftFolder = nil
             currentFile = url
             isDirty = false
+            editor.documentFolder = url.deletingLastPathComponent()
             editor.load(text: file.text)
             applyEditability(of: file)
             unseen.remove(url)
@@ -262,6 +264,7 @@ final class AppModel: ObservableObject {
         draftFolder = folders.first
         isDirty = false
         notice = nil
+        editor.documentFolder = draftFolder
         editor.load(text: "")
         editor.isEditable = true
         defaults.removeObject(forKey: Key.lastFile)
@@ -363,7 +366,8 @@ final class AppModel: ObservableObject {
             let name = source.deletingPathExtension().lastPathComponent
             let destination = FileNaming.uniqueURL(for: name, in: target)
             do {
-                try FileManager.default.copyItem(at: source, to: destination)
+                // A link would be copied as a link, and edits would then change the original.
+                try FileManager.default.copyItem(at: source.resolvingSymlinksInPath(), to: destination)
                 knownFiles.insert(destination)
                 first = first ?? destination
             } catch {

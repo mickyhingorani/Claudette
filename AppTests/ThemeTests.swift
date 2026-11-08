@@ -1,6 +1,20 @@
 import AppKit
 import XCTest
+import ClaudetteCore
 @testable import Claudette
+
+/// The WCAG contrast ratio between two colors.
+enum ThemeContrast {
+    static func ratio(_ a: NSColor, _ b: NSColor) -> CGFloat {
+        func luminance(_ color: NSColor) -> CGFloat {
+            let c = color.usingColorSpace(.sRGB)!
+            func channel(_ v: CGFloat) -> CGFloat { v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
+            return 0.2126 * channel(c.redComponent) + 0.7152 * channel(c.greenComponent) + 0.0722 * channel(c.blueComponent)
+        }
+        let (x, y) = (luminance(a), luminance(b))
+        return (max(x, y) + 0.05) / (min(x, y) + 0.05)
+    }
+}
 
 final class ThemeTests: XCTestCase {
     private func luminance(_ color: NSColor) -> CGFloat {
@@ -165,5 +179,34 @@ final class CodeLineSpacingTests: XCTestCase {
             let line = layout.lineFragmentRect(forGlyphAt: layout.glyphIndexForCharacter(at: 6), effectiveRange: nil)
             XCTAssertEqual(line.height, (font.pointSize * 1.55).rounded(), accuracy: 0.5, theme.name)
         }
+    }
+}
+
+@MainActor
+final class LanguageGuessEditorTests: XCTestCase {
+    func testTypingInUnlabeledCodeGuessesItsLanguageOnce() {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.load(text: "```\nfunction add(a, b) {\n  return a + b;\n}\n```\n")
+        let before = CodeHighlighter.shared.guessCount
+        for character in "// note" {
+            editor.insertText(String(character), replacementRange: NSRange(location: 4, length: 0))
+        }
+        XCTAssertEqual(CodeHighlighter.shared.guessCount, before)
+    }
+
+    func testUnlabeledCodeIsStillColored() {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.theme = .slate
+        editor.load(text: "```\nfunction add(a, b) {\n  return a + b;\n}\n```\n")
+        let keyword = editor.textStorage!.attribute(.foregroundColor, at: 4, effectiveRange: nil) as? NSColor
+        XCTAssertEqual(keyword, Theme.slate.palette.keyword)
+    }
+
+    func testOpeningAnotherFileGuessesAgain() {
+        let (_, editor) = EditorTextView.makeInScrollView()
+        editor.load(text: "```\nfunction a() {}\n```\n")
+        let before = CodeHighlighter.shared.guessCount
+        editor.load(text: "```\ndef a():\n    return 1\n```\n")
+        XCTAssertGreaterThan(CodeHighlighter.shared.guessCount, before)
     }
 }

@@ -4,6 +4,9 @@ A simple, dark Markdown app for macOS, with minimal chrome. It's a calm place to
 
 - Edit in a formatted view or a plain Markdown view (`⌘E`). Both show the same text, so viewing a file never changes it.
 - Tables are drawn as real tables. Click a cell to edit it.
+- Images on a line of their own show as pictures, from your Mac or the web. Click one to edit its Markdown.
+- Callouts like `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` and `[!CAUTION]` show as tinted boxes with an icon.
+- Task checkboxes are drawn as real boxes. Click one to tick it.
 - Connect any folder, such as a project folder Claude also works in. New files appear on their own.
 - Import files, or drag them onto the window. Drag a folder in to connect it.
 - Edits save automatically.

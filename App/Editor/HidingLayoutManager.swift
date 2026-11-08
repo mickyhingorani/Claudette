@@ -1,4 +1,19 @@
 import AppKit
+import ClaudetteCore
+
+struct CalloutDecoration: Equatable {
+    var range: NSRange
+    var kind: CalloutKind
+    var marker: NSRange
+    var showsDefaultTitle: Bool
+}
+
+/// A task checkbox drawn in place of its `[ ]` marker. `textLocation` is where the task's text starts.
+struct CheckboxDecoration: Equatable {
+    var location: Int
+    var isChecked: Bool
+    var textLocation: Int
+}
 
 struct EditorDecorations: Equatable {
     var codeBlocks: [NSRange] = []
@@ -8,6 +23,8 @@ struct EditorDecorations: Equatable {
     var underlines: [NSRange] = []
     var strikes: [NSRange] = []
     var paragraphBreaks: [NSRange] = []
+    var callouts: [CalloutDecoration] = []
+    var checkboxes: [CheckboxDecoration] = []
 }
 
 /// Draws the document with some characters hidden or swapped, without changing the text.
@@ -18,12 +35,17 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     /// Tables drawn over hidden source, as the source range and the height to reserve.
     private(set) var reservedTables: [(range: NSRange, height: CGFloat)] = []
     private var tableOffsets: [Int: CGFloat] = [:]
+    /// Pictures drawn over block image lines, as the image source range and the picture's height.
+    private(set) var reservedImages: [(range: NSRange, height: CGFloat)] = []
+    private var imageOffsets: [Int: CGFloat] = [:]
     /// Clears the code background, which reaches past the block's last line.
     private static let spaceBelowCode: CGFloat = 10
     /// The space after a paragraph, shown in place of the hidden blank line that ends it.
     var paragraphGap: CGFloat = 0
     /// The font of a line with no text in it yet.
     var emptyLineFont: NSFont?
+    var palette: Palette?
+    var pageBackground = NSColor.clear
     var codeBackground = NSColor.clear
     var chipBackground = NSColor.clear
     var ruleColor = NSColor.clear
@@ -42,6 +64,15 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
     }
 
     func isHidden(at index: Int) -> Bool { hidden.contains(index) }
+
+    /// The most text any one edit has asked to lay out again, for checking edits stay local.
+    var largestInvalidation = 0
+
+    override func processEditing(for textStorage: NSTextStorage, edited editMask: NSTextStorageEditActions, range newCharRange: NSRange,
+                                 changeInLength delta: Int, invalidatedRange invalidatedCharRange: NSRange) {
+        largestInvalidation = max(largestInvalidation, invalidatedCharRange.length)
+        super.processEditing(for: textStorage, edited: editMask, range: newCharRange, changeInLength: delta, invalidatedRange: invalidatedCharRange)
+    }
 
     /// Pass `invalidate: false` from inside text storage editing, where layout is redone anyway.
     func setDisplay(hidden newHidden: IndexSet, substitutions newSubstitutions: [Int: Character], invalidate: Bool = true) {
@@ -73,6 +104,18 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         }
     }
 
+    func setReservedImages(_ images: [(range: NSRange, height: CGFloat)], invalidate: Bool) {
+        let changed = images.map(\.height) != reservedImages.map(\.height) || images.map(\.range) != reservedImages.map(\.range)
+        reservedImages = images
+        guard invalidate, changed, let length = textStorage?.length else { return }
+        for image in images where NSMaxRange(image.range) <= length {
+            invalidateLayout(forCharacterRange: image.range, actualCharacterRange: nil)
+        }
+    }
+
+    /// How far below its line fragment's top a picture starts: below its source while that shows.
+    func imageOffset(at location: Int) -> CGFloat { imageOffsets[location] ?? 0 }
+
     func layoutManager(_ layoutManager: NSLayoutManager,
                        shouldSetLineFragmentRect lineFragmentRect: UnsafeMutablePointer<NSRect>,
                        lineFragmentUsedRect: UnsafeMutablePointer<NSRect>,
@@ -83,7 +126,16 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
         fitUsedRect(lineFragmentUsedRect, toTextIn: characters, fragment: lineFragmentRect.pointee, baseline: baselineOffset.pointee)
         let belowCode = endsCodeBlock(characters) ? Self.spaceBelowCode : 0
         let belowParagraph = endsParagraph(characters) ? paragraphGap : 0
-        let spaceBelow = max(belowCode, belowParagraph)
+        let belowCallout = endsCallout(characters) ? Self.spaceBelowCallout : 0
+        let spaceBelow = max(belowCode, belowParagraph, belowCallout)
+        // The picture goes below the line holding the source's end, which may have wrapped.
+        if let image = reservedImages.first(where: { $0.range.length > 0 && NSLocationInRange(NSMaxRange($0.range) - 1, characters) }) {
+            let showsSource = !hidden.contains(image.range.location)
+            let textHeight = showsSource || characters.location < image.range.location ? lineFragmentRect.pointee.height : 0
+            imageOffsets[image.range.location] = textHeight
+            lineFragmentRect.pointee.size.height = textHeight + image.height + spaceBelow
+            return true
+        }
         guard let table = reservedTables.first(where: { NSIntersectionRange($0.range, characters).length > 0 }) else {
             lineFragmentRect.pointee.size.height += spaceBelow
             return true
@@ -184,6 +236,9 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
 
     override func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: NSPoint) {
         super.drawBackground(forGlyphRange: glyphsToShow, at: origin)
+        for callout in decorations.callouts {
+            drawCallout(callout, showing: glyphsToShow, at: origin)
+        }
         for range in decorations.codeBlocks {
             guard fragmentsRect(of: range, showing: glyphsToShow) != nil, let rect = codeBackgroundRect(of: range) else { continue }
             codeBackground.setFill()
@@ -207,6 +262,142 @@ final class HidingLayoutManager: NSLayoutManager, NSLayoutManagerDelegate {
             guard let rect = fragmentsRect(of: range, showing: glyphsToShow) else { continue }
             ruleColor.setFill()
             NSRect(x: rect.minX + origin.x, y: rect.midY + origin.y, width: rect.width, height: 1).fill()
+        }
+    }
+
+    // MARK: Callouts
+
+    private static let calloutSymbols: [CalloutKind: String] = [
+        .note: "info.circle", .tip: "lightbulb", .important: "exclamationmark.bubble",
+        .warning: "exclamationmark.triangle", .caution: "exclamationmark.octagon",
+    ]
+
+    /// Where the first line's text sits: the left edge of its text area and its baseline.
+    private func firstLine(of location: Int) -> (rect: NSRect, x: CGFloat, baseline: CGFloat, font: NSFont)? {
+        guard let storage = textStorage, location < storage.length,
+              let font = storage.attribute(.font, at: location, effectiveRange: nil) as? NSFont else { return nil }
+        let glyph = glyphIndexForCharacter(at: location)
+        let rect = lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
+        let padding = textContainers.first?.lineFragmentPadding ?? 0
+        return (rect, rect.minX + padding, rect.minY + self.location(forGlyphAt: glyph).y, font)
+    }
+
+    private func drawCallout(_ callout: CalloutDecoration, showing glyphsToShow: NSRange, at origin: NSPoint) {
+        guard let palette, fragmentsRect(of: callout.range, showing: glyphsToShow) != nil,
+              let area = calloutRect(of: callout.range), let line = firstLine(of: callout.range.location) else { return }
+        let color = palette.callout(callout.kind)
+        let box = area.offsetBy(dx: origin.x, dy: origin.y)
+        let shape = NSBezierPath(roundedRect: box, xRadius: 7, yRadius: 7)
+        color.withAlphaComponent(0.12).setFill()
+        shape.fill()
+        NSGraphicsContext.saveGraphicsState()
+        shape.addClip()
+        color.setFill()
+        NSRect(x: box.minX, y: box.minY, width: 3, height: box.height).fill()
+        NSGraphicsContext.restoreGraphicsState()
+
+        let x = line.x + origin.x + Self.quoteIndent
+        let baseline = line.baseline + origin.y
+        let configuration = NSImage.SymbolConfiguration(pointSize: line.font.pointSize * 0.9, weight: .semibold)
+            .applying(.init(paletteColors: [color]))
+        if let name = Self.calloutSymbols[callout.kind],
+           let symbol = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(configuration) {
+            let center = baseline - line.font.capHeight / 2
+            symbol.draw(in: NSRect(x: x, y: center - symbol.size.height / 2, width: symbol.size.width, height: symbol.size.height),
+                        from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+        }
+        guard callout.showsDefaultTitle, hidden.contains(callout.marker.location) else { return }
+        let bold = NSFontManager.shared.convert(line.font, toHaveTrait: .boldFontMask)
+        let title = NSAttributedString(string: callout.kind.rawValue.capitalized, attributes: [.font: bold, .foregroundColor: color])
+        title.draw(at: NSPoint(x: x + Self.calloutIconWidth, y: baseline - bold.ascender))
+    }
+
+    /// A callout's box: from just above its first line of text to just below its last, so the
+    /// gaps between paragraphs stay outside it.
+    func calloutRect(of range: NSRange) -> NSRect? {
+        guard let glyphs = displayedGlyphs(of: range) else { return nil }
+        var result: NSRect?
+        enumerateLineFragments(forGlyphRange: glyphs) { rect, used, _, _, _ in
+            let line = NSRect(x: rect.minX, y: used.minY, width: rect.width, height: used.height)
+            result = result?.union(line) ?? line
+        }
+        return result?.insetBy(dx: 0, dy: -Self.calloutPadding)
+    }
+
+    private static let calloutPadding: CGFloat = 8
+    /// Room below a callout, so stacked callouts and the text after them clear its box.
+    private static let spaceBelowCallout: CGFloat = 24
+
+    private func endsCallout(_ characters: NSRange) -> Bool {
+        decorations.callouts.contains { $0.range.length > 0 && NSLocationInRange(NSMaxRange($0.range) - 1, characters) }
+    }
+
+    /// The indent of quote text, and the room left on a callout's first line for its icon.
+    static let quoteIndent: CGFloat = 18
+    static let calloutIconWidth: CGFloat = 26
+
+    // MARK: Checkboxes
+
+    /// Glyphs of the checkbox symbols, which are drawn as boxes instead.
+    private func checkboxGlyphs() -> IndexSet {
+        guard let length = textStorage?.length else { return IndexSet() }
+        return IndexSet(decorations.checkboxes.filter { $0.location < length }.map { glyphIndexForCharacter(at: $0.location) })
+    }
+
+    override func drawGlyphs(forGlyphRange glyphsToShow: NSRange, at origin: NSPoint) {
+        let boxes = checkboxGlyphs()
+        guard !boxes.isEmpty else {
+            super.drawGlyphs(forGlyphRange: glyphsToShow, at: origin)
+            return
+        }
+        var parts = IndexSet(integersIn: glyphsToShow.location..<NSMaxRange(glyphsToShow))
+        parts.subtract(boxes)
+        for part in parts.rangeView {
+            super.drawGlyphs(forGlyphRange: NSRange(location: part.lowerBound, length: part.count), at: origin)
+        }
+        for checkbox in decorations.checkboxes {
+            guard let rect = checkboxRect(at: checkbox.location),
+                  NSLocationInRange(glyphIndexForCharacter(at: checkbox.location), glyphsToShow) else { continue }
+            drawCheckbox(in: rect.offsetBy(dx: origin.x, dy: origin.y), isChecked: checkbox.isChecked)
+        }
+    }
+
+    /// The box for a task checkbox, sized to its task's text and centered in its symbol's space.
+    func checkboxRect(at location: Int) -> NSRect? {
+        guard let storage = textStorage, let checkbox = decorations.checkboxes.first(where: { $0.location == location }),
+              location < storage.length else { return nil }
+        let textIndex = min(checkbox.textLocation, storage.length - 1)
+        guard let font = storage.attribute(.font, at: textIndex, effectiveRange: nil) as? NSFont else { return nil }
+        let glyph = glyphIndexForCharacter(at: location)
+        var lineGlyphs = NSRange()
+        let fragment = lineFragmentRect(forGlyphAt: glyph, effectiveRange: &lineGlyphs)
+        let point = self.location(forGlyphAt: glyph)
+        let next = glyph + 1 < NSMaxRange(lineGlyphs) ? self.location(forGlyphAt: glyph + 1).x : point.x + font.pointSize
+        let side = (font.capHeight + 4).rounded()
+        let centerY = fragment.minY + point.y - font.capHeight / 2
+        let x = fragment.minX + point.x + max(0, (next - point.x - side) / 2)
+        return NSRect(x: x, y: (centerY - side / 2).rounded(), width: side, height: side)
+    }
+
+    private func drawCheckbox(in rect: NSRect, isChecked: Bool) {
+        guard let palette else { return }
+        let box = NSBezierPath(roundedRect: rect.insetBy(dx: 0.75, dy: 0.75), xRadius: 4, yRadius: 4)
+        if isChecked {
+            palette.check.setFill()
+            box.fill()
+            let mark = NSBezierPath()
+            mark.move(to: NSPoint(x: rect.minX + rect.width * 0.27, y: rect.minY + rect.height * 0.52))
+            mark.line(to: NSPoint(x: rect.minX + rect.width * 0.43, y: rect.minY + rect.height * 0.68))
+            mark.line(to: NSPoint(x: rect.minX + rect.width * 0.74, y: rect.minY + rect.height * 0.33))
+            mark.lineWidth = 1.8
+            mark.lineCapStyle = .round
+            mark.lineJoinStyle = .round
+            pageBackground.setStroke()
+            mark.stroke()
+        } else {
+            palette.check.setStroke()
+            box.lineWidth = 1.5
+            box.stroke()
         }
     }
 

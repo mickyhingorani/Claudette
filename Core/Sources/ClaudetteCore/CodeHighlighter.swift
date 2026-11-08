@@ -43,6 +43,20 @@ public final class CodeHighlighter {
         return result
     }
 
+    /// How many guesses have run, so callers can check they aren't guessing on every keystroke.
+    public private(set) var guessCount = 0
+
+    /// highlight.js's guess at the language of unlabeled code, or `plaintext`. Guessing tries
+    /// every language, so it's slow: callers should guess once per block and reuse the answer.
+    public func guessLanguage(in code: String) -> String {
+        let sample = (code as NSString).length > Self.maxGuessLength ? (code as NSString).substring(to: Self.maxGuessLength) : code
+        guard !sample.isEmpty, let engine = loadEngine() else { return "plaintext" }
+        guessCount += 1
+        let result = engine.invokeMethod("highlightAuto", withArguments: [sample])
+        guard let language = result?.objectForKeyedSubscript("language"), language.isString else { return "plaintext" }
+        return language.toString()
+    }
+
     private func loadEngine() -> JSValue? {
         if let engine { return engine }
         guard let url = Bundle.module.url(forResource: "highlight.min", withExtension: "js"),

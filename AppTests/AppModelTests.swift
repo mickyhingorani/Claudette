@@ -168,6 +168,24 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: source.path))
     }
 
+    func testImportingALinkCopiesTheFileItPointsTo() throws {
+        let project = try folder("Project")
+        let original = try write("hello", "Doc.md", in: try folder("Outside"))
+        let links = try folder("Links")
+        let link = links.appendingPathComponent("Linked.md")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: original)
+        let model = makeModel()
+        model.connect(project)
+        model.importFiles([link], into: project)
+        let copy = project.appendingPathComponent("Linked.md")
+        let type = try FileManager.default.attributesOfItem(atPath: copy.path)[.type] as? FileAttributeType
+        XCTAssertEqual(type, .typeRegular)
+        model.editor.insertText(" there", replacementRange: NSRange(location: 5, length: 0))
+        model.saveNow()
+        XCTAssertEqual(try read(original), "hello")
+        XCTAssertEqual(try read(copy), "hello there")
+    }
+
     func testImportIntoChosenFolder() throws {
         let project = try folder("Project")
         let source = try write("hello", "Doc.md", in: try folder("Outside"))
