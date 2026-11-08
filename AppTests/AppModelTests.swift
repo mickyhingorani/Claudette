@@ -364,6 +364,67 @@ final class AppModelTests: XCTestCase {
         XCTAssertNotNil(model.notice)
     }
 
+    // MARK: Folder events
+
+    func testOwnSaveDoesNotRescanFolders() throws {
+        let model = makeModel()
+        let file = try write("a", "a.md", in: starter)
+        model.refresh()
+        model.open(file)
+        type("b", into: model)
+        model.saveNow()
+        let scans = model.scannedFolders.count
+        model.filesChanged(at: [file.path, starter.appendingPathComponent(".dat.nosync1a2b").path])
+        XCTAssertEqual(model.scannedFolders.count, scans)
+    }
+
+    func testNewNoteRescansOnlyItsFolder() throws {
+        let model = makeModel()
+        let other = try folder("Other")
+        model.connect(other)
+        let scans = model.scannedFolders.count
+        let note = try write("hi", "New.md", in: other)
+        model.filesChanged(at: [note.path])
+        XCTAssertEqual(Array(model.scannedFolders.dropFirst(scans)), [other])
+        XCTAssertTrue(model.allFiles.contains(note))
+        XCTAssertTrue(model.unseen.contains(note))
+    }
+
+    func testNonMarkdownChangesAreIgnored() throws {
+        let model = makeModel()
+        let scans = model.scannedFolders.count
+        let text = try write("x", "notes.txt", in: starter)
+        model.filesChanged(at: [text.path])
+        XCTAssertEqual(model.scannedFolders.count, scans)
+    }
+
+    func testNewSubfolderIsScanned() throws {
+        let model = makeModel()
+        let sub = starter.appendingPathComponent("Sub", isDirectory: true)
+        try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+        let note = try write("x", "In.md", in: sub)
+        model.filesChanged(at: [sub.path])
+        XCTAssertTrue(model.allFiles.contains(note))
+    }
+
+    func testRealPathOfALinkedFolderStillMatches() throws {
+        let model = makeModel()
+        let real = starter.resolvingSymlinksInPath()
+        let note = try write("x", "Real.md", in: starter)
+        model.filesChanged(at: [real.appendingPathComponent("Real.md").path])
+        XCTAssertTrue(model.allFiles.contains(note))
+    }
+
+    func testOpenFileChangedElsewhereStillReloads() throws {
+        let model = makeModel()
+        let file = try write("a", "a.md", in: starter)
+        model.refresh()
+        model.open(file)
+        try "changed".write(to: file, atomically: true, encoding: .utf8)
+        model.filesChanged(at: [file.path])
+        XCTAssertEqual(model.editor.string, "changed")
+    }
+
     func testStateRestoredOnRelaunch() throws {
         let project = try folder("Project")
         let file = try write("x", "a.md", in: project)

@@ -91,8 +91,8 @@ final class AppModel: ObservableObject {
             persistFolders()
         }
         if watchesFolders {
-            watcher = FolderWatcher { [weak self] in
-                MainActor.assumeIsolated { self?.refresh() }
+            watcher = FolderWatcher { [weak self] paths in
+                MainActor.assumeIsolated { self?.filesChanged(at: paths) }
             }
             watcher?.watch(folders)
         }
@@ -128,7 +128,7 @@ final class AppModel: ObservableObject {
 
     // MARK: Folders
 
-    private var allFiles: Set<URL> { Set(sections.flatMap { $0.files.map(\.url) }) }
+    var allFiles: Set<URL> { Set(sections.flatMap { $0.files.map(\.url) }) }
 
     /// The folder holding the open file, or the first folder.
     var currentFolder: URL? {
@@ -181,14 +181,59 @@ final class AppModel: ObservableObject {
         folders.contains { url.path.hasPrefix(Self.prefix(of: $0)) }
     }
 
+    /// Every folder scanned, in order, so tests can check scans stay rare.
+    private(set) var scannedFolders: [URL] = []
+
     private func scan() {
-        sections = folders.map { FolderSection(folder: $0, files: (try? FolderScanner.scan($0)) ?? []) }
+        scan(folders)
+    }
+
+    /// Rescans some folders and keeps the others' lists as they are.
+    private func scan(_ chosen: [URL]) {
+        let known = Dictionary(sections.map { ($0.folder, $0.files) }, uniquingKeysWith: { first, _ in first })
+        sections = folders.map { folder in
+            guard chosen.contains(folder) else { return FolderSection(folder: folder, files: known[folder] ?? []) }
+            scannedFolders.append(folder)
+            return FolderSection(folder: folder, files: (try? FolderScanner.scan(folder)) ?? [])
+        }
     }
 
     /// Picks up whatever changed on disk.
     func refresh() {
         checkOpenFile()
         scan()
+        noteArrivals()
+    }
+
+    private static let markdownExtensions: Set<String> = ["md", "markdown"]
+
+    /// Handles changes the folder watcher saw. The app's own saves and non-Markdown files
+    /// don't rescan anything, and only folders with a change in them are rescanned.
+    func filesChanged(at paths: [String]) {
+        let openPath = currentFile.map { URL(fileURLWithPath: $0.path).resolvingSymlinksInPath().path }
+        let ownSave = document.map { $0.checkDisk() == .unchanged } ?? false
+        checkOpenFile()
+        let relevant = paths.filter { path in
+            let url = URL(fileURLWithPath: path)
+            if ownSave, url.resolvingSymlinksInPath().path == openPath { return false }
+            if Self.markdownExtensions.contains(url.pathExtension.lowercased()) { return true }
+            var isDirectory: ObjCBool = false
+            let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
+            // A folder that appeared or vanished can hold notes; a missing extensionless path may have been one.
+            return isDirectory.boolValue || (!exists && url.pathExtension.isEmpty)
+        }
+        // The watcher reports real paths, which may differ from a folder's linked path (/var and /private/var).
+        let resolved = relevant.map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }
+        let touched = folders.filter { folder in
+            let real = folder.resolvingSymlinksInPath()
+            return resolved.contains { $0 == real.path || $0.hasPrefix(Self.prefix(of: real)) }
+        }
+        guard !touched.isEmpty else { return }
+        scan(touched)
+        noteArrivals()
+    }
+
+    private func noteArrivals() {
         let files = allFiles
         var arrivals = files.subtracting(knownFiles)
         if let currentFile { arrivals.remove(currentFile) }
