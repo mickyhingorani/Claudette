@@ -12,6 +12,7 @@
 		0A45766E1BB3DA9C8E76E5F1 /* GeistMono-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 411D6E3AEF8DA821FDFC63BD /* GeistMono-OFL.txt */; };
 		0D45AB81AA2BDC6A5D6851B5 /* ParagraphTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B17989DDD758FF6619372CD3 /* ParagraphTests.swift */; };
 		0E38A23CEDA871AB4BA2496A /* Geist-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5EE10C310B2B43A4ED85F341 /* Geist-Italic[wght].ttf */; };
+		12E1C75F3408BA49489D5D33 /* ListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8120104FB739064E3B04501 /* ListTests.swift */; };
 		171420B68E026CAB58506412 /* LinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3326C1AE582E0280FB0122B4 /* LinkTests.swift */; };
 		1E007A53D7E04A3F1625C2A9 /* IBMPlexMono-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8FA0DA4D86C871865A0A6AF1 /* IBMPlexMono-Italic.ttf */; };
 		1FA4279C34C5C46E5627DCB1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4819C256EEBDE1176786EA4 /* Theme.swift */; };
@@ -108,6 +109,7 @@
 		9B4097A68E275D263A6D78F5 /* HidingLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HidingLayoutManager.swift; sourceTree = "<group>"; };
 		9E60578DCA7915693FA7EBB1 /* EditorStyler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorStyler.swift; sourceTree = "<group>"; };
 		A6F47EA458A587DE658DA260 /* IBMPlexMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-Regular.ttf"; sourceTree = "<group>"; };
+		A8120104FB739064E3B04501 /* ListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListTests.swift; sourceTree = "<group>"; };
 		A818A1E4233A0221DE14323F /* TableOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableOverlayView.swift; sourceTree = "<group>"; };
 		AAB462AE787EFE81200A98E1 /* JetBrainsMono[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono[wght].ttf"; sourceTree = "<group>"; };
 		B17989DDD758FF6619372CD3 /* ParagraphTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParagraphTests.swift; sourceTree = "<group>"; };
@@ -195,6 +197,7 @@
 				DE360946399D0CD26366F6F4 /* GuideTests.swift */,
 				940B8A35B594596B20FE853C /* ImageTests.swift */,
 				3326C1AE582E0280FB0122B4 /* LinkTests.swift */,
+				A8120104FB739064E3B04501 /* ListTests.swift */,
 				B17989DDD758FF6619372CD3 /* ParagraphTests.swift */,
 				2CFE2B39625E5ED76D55FD43 /* RealPathTests.swift */,
 				D992E68B5AE25B3C3EA54979 /* SmokeTests.swift */,
@@ -396,6 +399,7 @@
 				BBE33863409286DFC9C248F5 /* GuideTests.swift in Sources */,
 				CDCC06B4A619457821EB9E9C /* ImageTests.swift in Sources */,
 				171420B68E026CAB58506412 /* LinkTests.swift in Sources */,
+				12E1C75F3408BA49489D5D33 /* ListTests.swift in Sources */,
 				0D45AB81AA2BDC6A5D6851B5 /* ParagraphTests.swift in Sources */,
 				415A729A4D294FA3888AB804 /* RealPathTests.swift in Sources */,
 				D3E3CA48C014DFB7D261F669 /* SmokeTests.swift in Sources */,

@@ -142,10 +142,10 @@ final class ParagraphTests: XCTestCase {
         XCTAssertEqual(editor.string, "```\nab\n\n```\n")
     }
 
-    func testReturnInAListIsAPlainNewline() {
+    func testReturnInAListStartsTheNextItem() {
         let editor = makeEditor("- a", caret: 3)
         editor.insertNewline(nil)
-        XCTAssertEqual(editor.string, "- a\n")
+        XCTAssertEqual(editor.string, "- a\n- ")
     }
 
     func testReturnInMarkdownViewIsAPlainNewline() {

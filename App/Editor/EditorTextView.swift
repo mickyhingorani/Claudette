@@ -409,6 +409,31 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
         return !isBlank && !inCode && !inList
     }
 
+    // MARK: Lists
+
+    /// Applies a list edit as one undoable step, unless the caret is in code. True if it did.
+    private func applyListEdit(_ result: (edits: [TextEdit], selection: NSRange)?) -> Bool {
+        guard isEditable, let result else { return false }
+        let location = selectedRange().location
+        let inCode = styler.map.codeBlocks.contains { NSLocationInRange(location, $0.range) || location == NSMaxRange($0.range) }
+        guard !inCode else { return false }
+        applyEdits(result.edits)
+        setSelectedRange(result.selection)
+        return true
+    }
+
+    /// Tab on a list item nests it a level.
+    override func insertTab(_ sender: Any?) {
+        if applyListEdit(ListEditing.indentEdits(in: string, selection: selectedRange(), outdent: false)) { return }
+        super.insertTab(sender)
+    }
+
+    /// Shift-Tab on a list item brings it back out a level.
+    override func insertBacktab(_ sender: Any?) {
+        if applyListEdit(ListEditing.indentEdits(in: string, selection: selectedRange(), outdent: true)) { return }
+        super.insertBacktab(sender)
+    }
+
     /// Shift-Return: a line break inside the paragraph.
     override func insertLineBreak(_ sender: Any?) {
         insertText(lineEnding, replacementRange: selectedRange())
@@ -534,6 +559,7 @@ final class EditorTextView: NSTextView, NSTextStorageDelegate {
 
     /// Return at the end of an opening fence with no closing one adds the closing fence below.
     override func insertNewline(_ sender: Any?) {
+        if applyListEdit(ListEditing.returnEdits(in: string, selection: selectedRange())) { return }
         guard let fence = fenceToClose() else {
             if startsParagraphOnReturn {
                 insertText(lineEnding + lineEnding, replacementRange: selectedRange())

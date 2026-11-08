@@ -333,14 +333,27 @@ final class EditorStyler {
         }
     }
 
-    /// Lines up wrapped lines of a list item with its text.
+    /// How far list items sit in from the text around them.
+    static let listIndent: CGFloat = 14
+    /// Each space before a nested list item is drawn this wide.
+    static let nestedSpaceWidth: CGFloat = 9
+
+    /// Indents a list item, and lines up its wrapped lines with its text.
     private func hangListLine(markerRange: NSRange, in storage: StyledText) {
         let text = storage.string as NSString
         let line = text.lineRange(for: NSRange(location: markerRange.location, length: 0))
-        let prefix = text.substring(with: NSRange(location: line.location, length: NSMaxRange(markerRange) - line.location)) + " "
-        let width = (prefix as NSString).size(withAttributes: [.font: baseFont]).width
+        let leading = markerRange.location - line.location
+        // Spaces before a nested item are narrow; each is drawn wider so nesting shows.
+        let space = (" " as NSString).size(withAttributes: [.font: baseFont]).width
+        if leading > 0 {
+            storage.addAttribute(.kern, value: Self.nestedSpaceWidth - space, range: NSRange(location: line.location, length: leading))
+        }
+        var marker = text.substring(with: markerRange)
+        if mode == .formatted, marker.count == 1, "-*+".contains(marker) { marker = "•" }
+        let markerWidth = ((marker + " ") as NSString).size(withAttributes: [.font: baseFont]).width
         let paragraph = baseParagraph
-        paragraph.headIndent = width
+        paragraph.firstLineHeadIndent = Self.listIndent
+        paragraph.headIndent = Self.listIndent + CGFloat(leading) * Self.nestedSpaceWidth + markerWidth
         paragraph.paragraphSpacing = 3
         storage.addAttribute(.paragraphStyle, value: paragraph, range: line)
     }
