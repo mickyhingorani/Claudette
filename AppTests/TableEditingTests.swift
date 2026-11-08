@@ -107,6 +107,32 @@ final class TableEditingTests: XCTestCase {
         XCTAssertNotNil(overlay.editingCell)
     }
 
+    func testMenuActionDoesNothingIfTheFileReloadedWhileItWasOpen() throws {
+        let editor = makeEditor(text)
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        let center = NSPoint(x: overlay.columnWidths[0] / 2, y: overlay.gridSize.height - 5)
+        let click = try XCTUnwrap(NSEvent.mouseEvent(with: .rightMouseDown, location: overlay.convert(center, to: nil), modifierFlags: [],
+                                                     timestamp: 0, windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
+        let menu = try XCTUnwrap(overlay.menu(for: click))
+        let deleteRow = try XCTUnwrap(menu.items.first { $0.title == "Delete Row" })
+        let reloaded = "Changed outside\n\n| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |\n"
+        editor.load(text: reloaded)
+        NSApp.sendAction(deleteRow.action!, to: deleteRow.target, from: deleteRow)
+        XCTAssertEqual(editor.string, reloaded)
+    }
+
+    func testMenuActionStillWorksWhenNothingChanged() throws {
+        let editor = makeEditor(text)
+        let overlay = try XCTUnwrap(editor.tableOverlays.first)
+        let center = NSPoint(x: overlay.columnWidths[0] / 2, y: overlay.gridSize.height - 5)
+        let click = try XCTUnwrap(NSEvent.mouseEvent(with: .rightMouseDown, location: overlay.convert(center, to: nil), modifierFlags: [],
+                                                     timestamp: 0, windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
+        let menu = try XCTUnwrap(overlay.menu(for: click))
+        let deleteRow = try XCTUnwrap(menu.items.first { $0.title == "Delete Row" })
+        NSApp.sendAction(deleteRow.action!, to: deleteRow.target, from: deleteRow)
+        XCTAssertFalse(editor.string.contains("| 1 | 2 |"))
+    }
+
     func testCellEditChangesOnlyThatCell() throws {
         let editor = makeEditor(text)
         let overlay = try XCTUnwrap(editor.tableOverlays.first)
