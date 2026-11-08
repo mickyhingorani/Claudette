@@ -433,11 +433,14 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func trash(_ url: URL) {
+    /// Moves a file to the Trash, saving the open file's last edits first. Returns where it went.
+    @discardableResult
+    func trash(_ url: URL) -> URL? {
         let isCurrent = currentFile == url
-        if isCurrent { autosave?.cancel() }
+        if isCurrent { flush() }
         do {
-            try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+            var trashed: NSURL?
+            try FileManager.default.trashItem(at: url, resultingItemURL: &trashed)
             knownFiles.remove(url)
             unseen.remove(url)
             scan()
@@ -445,9 +448,11 @@ final class AppModel: ObservableObject {
                 closeDocument()
                 showNextFile()
             }
+            return trashed as URL?
         } catch {
             notice = "Couldn't move \(url.lastPathComponent) to the Trash"
             if isCurrent, isDirty { textDidChange() }
+            return nil
         }
     }
 }

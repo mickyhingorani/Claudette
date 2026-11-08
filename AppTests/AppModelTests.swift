@@ -337,6 +337,17 @@ final class AppModelTests: XCTestCase {
         XCTAssertNil(model.currentFile)
     }
 
+    func testTrashingTheOpenFileKeepsItsLastTyping() throws {
+        let model = makeModel()
+        let file = try write("a", "a.md", in: starter)
+        model.refresh()
+        model.open(file)
+        type("b", into: model)
+        let trashed = try XCTUnwrap(model.trash(file))
+        defer { try? FileManager.default.removeItem(at: trashed) }
+        XCTAssertEqual(try String(contentsOf: trashed, encoding: .utf8), "ab")
+    }
+
     func testStateRestoredOnRelaunch() throws {
         let project = try folder("Project")
         let file = try write("x", "a.md", in: project)
