@@ -12,6 +12,12 @@ struct FileListView: View {
         VStack(spacing: 0) {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
+                    if !model.openedFiles.isEmpty {
+                        title("Opened files")
+                        ForEach(model.openedFiles, id: \.self) { url in
+                            openedRow(url)
+                        }
+                    }
                     ForEach(model.sections) { section in
                         header(section)
                         if section.files.isEmpty {
@@ -48,6 +54,45 @@ struct FileListView: View {
                 renaming = nil
             }
             Button("Cancel", role: .cancel) { renaming = nil }
+        }
+    }
+
+    private func title(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(Color(nsColor: theme.dim))
+            .lineLimit(1)
+            .padding(.horizontal, 10)
+            .padding(.top, 10)
+            .padding(.bottom, 3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// A file opened from outside the connected folders, with the folder it's in.
+    private func openedRow(_ url: URL) -> some View {
+        let isCurrent = url == model.currentFile
+        return Button { model.openFromAnywhere(url) } label: {
+            HStack(spacing: 6) {
+                Text(url.deletingPathExtension().lastPathComponent)
+                    .font(.system(size: 13))
+                    .lineLimit(1)
+                    .foregroundStyle(Color(nsColor: isCurrent ? theme.text : theme.soft))
+                Text(url.deletingLastPathComponent().lastPathComponent)
+                    .font(.system(size: 11))
+                    .lineLimit(1)
+                    .foregroundStyle(Color(nsColor: theme.dim))
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(isCurrent ? Color(nsColor: theme.line) : .clear, in: RoundedRectangle(cornerRadius: 6))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(url.path)
+        .contextMenu {
+            Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+            Button("Remove from List") { model.removeFromOpened(url) }
         }
     }
 

@@ -1,6 +1,11 @@
 import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Markdown files opened from Finder, by double-click or Open With, open where they are.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        MainActor.assumeIsolated { AppModel.current?.openFromFinder(urls) }
+    }
+
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         MainActor.assumeIsolated {
             guard let model = AppModel.current else { return .terminateNow }
@@ -38,6 +43,8 @@ struct ClaudetteApp: App {
             CommandGroup(replacing: .newItem) {
                 Button("New") { model.newFile() }
                     .keyboardShortcut("n")
+                Button("Open…") { model.chooseFileToOpen() }
+                    .keyboardShortcut("o")
                 Divider()
                 Button("Connect Folder…") { model.chooseFolderToConnect() }
                     .keyboardShortcut("o", modifiers: [.command, .shift])

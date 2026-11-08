@@ -43,6 +43,7 @@ enum Snapshot {
         store.set([folder], forKey: "folders")
         store.set(defaults.string(forKey: "snapshotTheme") ?? Theme.default.id, forKey: "theme")
         store.set(defaults.string(forKey: "snapshotMode") ?? "formatted", forKey: "viewMode")
+        if let opened = defaults.string(forKey: "snapshotOpenedFile") { store.set([opened], forKey: "openedFiles") }
         let model = AppModel(defaults: store, starterFolder: URL(fileURLWithPath: folder), watchesFolders: false)
         model.isFileListOpen = defaults.bool(forKey: "snapshotList")
         model.isGuideOpen = defaults.bool(forKey: "snapshotGuide")

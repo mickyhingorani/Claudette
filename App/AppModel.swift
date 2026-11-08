@@ -17,6 +17,7 @@ final class AppModel: ObservableObject {
         static let viewMode = "viewMode"
         static let theme = "theme"
         static let fileListWidth = "fileListWidth"
+        static let openedFiles = "openedFiles"
     }
 
     private static let autosaveDelay: TimeInterval = 1
@@ -30,6 +31,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var sections: [FolderSection] = []
     @Published private(set) var currentFile: URL?
     @Published private(set) var unseen: Set<URL> = []
+    /// Files opened from outside the connected folders, newest first, so they're easy to reopen.
+    @Published private(set) var openedFiles: [URL] = []
+    private static let openedFilesLimit = 10
     @Published private(set) var notice: String?
     @Published var isFileListOpen = false
     /// The Markdown guide panel on the right.
@@ -93,11 +97,14 @@ final class AppModel: ObservableObject {
             folders = [Self.folderURL(starterFolder.path)]
             persistFolders()
         }
+        openedFiles = (defaults.stringArray(forKey: Key.openedFiles) ?? [])
+            .map { URL(fileURLWithPath: $0) }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
         if watchesFolders {
             watcher = FolderWatcher { [weak self] paths in
                 MainActor.assumeIsolated { self?.filesChanged(at: paths) }
             }
-            watcher?.watch(folders)
+            watcher?.watch(watchedFolders)
         }
         scan()
         knownFiles = allFiles
@@ -168,8 +175,19 @@ final class AppModel: ObservableObject {
 
     private func foldersChanged() {
         persistFolders()
-        watcher?.watch(folders)
+        watcher?.watch(watchedFolders)
         scan()
+    }
+
+    /// The connected folders, plus the folders of files opened from elsewhere, so a change
+    /// made to one of those files outside the app is still noticed.
+    var watchedFolders: [URL] {
+        var result = folders
+        for file in openedFiles {
+            let folder = Self.folderURL(file.deletingLastPathComponent().path)
+            if !result.contains(folder) { result.append(folder) }
+        }
+        return result
     }
 
     private func persistFolders() {
@@ -206,6 +224,7 @@ final class AppModel: ObservableObject {
         checkOpenFile()
         scan()
         noteArrivals()
+        dropMissingOpenedFiles()
     }
 
     private static let markdownExtensions: Set<String> = ["md", "markdown"]
@@ -213,6 +232,7 @@ final class AppModel: ObservableObject {
     /// Handles changes the folder watcher saw. The app's own saves and non-Markdown files
     /// don't rescan anything, and only folders with a change in them are rescanned.
     func filesChanged(at paths: [String]) {
+        dropMissingOpenedFiles()
         let openPath = currentFile.map { URL(fileURLWithPath: $0.path).resolvingSymlinksInPath().path }
         let ownSave = session.matchesDisk
         checkOpenFile()
@@ -296,6 +316,58 @@ final class AppModel: ObservableObject {
     private func applyEditability() {
         editor.isEditable = !session.isReadOnly
         notice = session.isReadOnly ? Self.readOnlyNotice : nil
+    }
+
+    // MARK: Files opened from anywhere
+
+    private static let markdownFileExtensions: Set<String> = ["md", "markdown"]
+
+    /// Opens a file where it is. One outside the connected folders joins the opened files
+    /// list; its folder isn't connected.
+    func openFromAnywhere(_ file: URL) {
+        let url = URL(fileURLWithPath: file.path)
+        open(url)
+        guard currentFile == url, !isInConnectedFolder(url) else { return }
+        remember(url)
+    }
+
+    /// Markdown files handed over by Finder, through Open With or a double-click.
+    func openFromFinder(_ urls: [URL]) {
+        let notes = urls.filter { Self.markdownFileExtensions.contains($0.pathExtension.lowercased()) }
+        for note in notes.dropFirst().reversed() where !isInConnectedFolder(note) { remember(URL(fileURLWithPath: note.path)) }
+        if let first = notes.first { openFromAnywhere(first) }
+    }
+
+    func removeFromOpened(_ url: URL) {
+        openedFiles.removeAll { $0 == url }
+        openedFilesChanged()
+    }
+
+    private func remember(_ url: URL) {
+        openedFiles.removeAll { $0 == url }
+        openedFiles.insert(url, at: 0)
+        openedFiles = Array(openedFiles.prefix(Self.openedFilesLimit))
+        openedFilesChanged()
+    }
+
+    /// A file moved or deleted elsewhere drops off the list.
+    private func dropMissingOpenedFiles() {
+        let existing = openedFiles.filter { FileManager.default.fileExists(atPath: $0.path) }
+        guard existing != openedFiles else { return }
+        openedFiles = existing
+        openedFilesChanged()
+    }
+
+    private func openedFilesChanged() {
+        defaults.set(openedFiles.map(\.path), forKey: Key.openedFiles)
+        watcher?.watch(watchedFolders)
+    }
+
+    func chooseFileToOpen() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = Self.markdownFileExtensions.compactMap { .init(filenameExtension: $0) }
+        panel.prompt = "Open"
+        if panel.runModal() == .OK, let url = panel.url { openFromAnywhere(url) }
     }
 
     /// A linked note opens like a file picked from the list, if it exists.
@@ -418,6 +490,8 @@ final class AppModel: ObservableObject {
         if let first { open(first) }
     }
 
+    /// A folder dropped anywhere is connected. Files dropped on the window open where they
+    /// are; files dropped on a folder's section in the list are copied into that folder.
     func handleDrop(_ urls: [URL], into folder: URL?) {
         var files: [URL] = []
         for url in urls {
@@ -429,7 +503,12 @@ final class AppModel: ObservableObject {
                 files.append(url)
             }
         }
-        if !files.isEmpty { importFiles(files, into: folder) }
+        guard !files.isEmpty else { return }
+        if folder != nil {
+            importFiles(files, into: folder)
+        } else {
+            openFromFinder(files)
+        }
     }
 
     func chooseFolderToConnect() {

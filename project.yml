@@ -32,6 +32,13 @@ targets:
         NSHumanReadableCopyright: ""
         # Pictures linked with plain http:// would otherwise be blocked. Fetching
         # pictures is the only network use.
+        # Claudette appears under Open With for Markdown files, without becoming the default.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Markdown Document
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - net.daringfireball.markdown
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
   ClaudetteTests:
