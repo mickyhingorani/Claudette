@@ -56,7 +56,7 @@ Don't touch Micky's files, `~/Claudette` or app settings unless asked. Tests use
 - **`App/` (Swift 5 mode):**
   - `AppModel`: folders, the file list, opened files, notices.
   - `DocumentSession`: every save, reload, conflict, rename and trash rule.
-  - `Theme`: colors and bundled fonts in `App/Fonts`.
+  - `Theme`: colors and bundled fonts in `App/Fonts`. Optional per-theme extras (`titleFace`, `outline`, `selectionColor`, `sidePanelColor`, `Palette.note`) default to the existing behavior, so a new look doesn't change other themes. [docs/themes.md](docs/themes.md) lists every theme.
   - `GuideView`.
   - `App/AppIcon.icon`: an Icon Composer file.
 - **`App/Editor/`:**
@@ -74,6 +74,7 @@ Don't touch Micky's files, `~/Claudette` or app settings unless asked. Tests use
 - **Empty list items:** an item like `  - ` with nothing after it isn't a list item to the parser. While scanning, it gets an invisible filler character at its line end, and `LineIndex` clamps columns to their line.
 - **Theme fonts:** they lack `◦` and `▪`, so bullet substitutions fall back to the system font or Apple Symbols.
 - **Watcher paths:** FSEvents reports `/private/var` where folders may be stored as `/var`. Compare resolved paths.
+- **Light themes:** themes can be light now. Use theme colors, never a fixed dark or light color. The readability tests cover every theme automatically, and a color copied from a website often fails them on a light page. `Theme.panel` is white in Harbor Light, so side panels use `theme.sidePanel`.
 - **Test setup:** main-thread test classes use a plain `setUp()`, not `setUpWithError()`. The throwing version crashed XCTest twice.
 
 ## Working with Micky

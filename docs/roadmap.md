@@ -23,6 +23,8 @@ Micky gets Markdown files from Claude and wanted a calm place on the Mac to read
 Decisions along the way:
 - **Folder app, not library app.** Claudette works on folders and files where they are, and keeps no private copy. A write-up of the two approaches is in the design document.
 - **Folder structure:** a folder for each project, with the file from Claude inside, opened in Claudette.
+- **Harbor and Harbor Light:** a dark and light pair based on the Mailchimp developer docs. Both keep Newsreader titles, though Mailchimp's light page uses bold sans. Colors too faint on the light page were darkened to stay readable.
+- **Window controls** (title bar, scroll bars) follow the theme, not the Mac's light or dark setting.
 - **Return** starts a new paragraph (Markdown's blank line, hidden as a half-line gap); **Shift-Return** breaks a line.
 
 ## Where we are
