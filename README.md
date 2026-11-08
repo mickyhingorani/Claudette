@@ -10,7 +10,8 @@ A simple, dark Markdown app for macOS, with minimal chrome. It's a calm place to
 - Lists continue on Return with the next bullet, number or checkbox; Return on an empty item ends the list. Tab and Shift-Tab nest items, and sub-bullets are drawn hollow.
 - A Markdown guide (`⌘/`, or the book icon) lists the syntax with live previews. Click an example to insert it.
 - Connect any folder, such as a project folder Claude also works in. New files appear on their own.
-- Import files, or drag them onto the window. Drag a folder in to connect it.
+- Open a Markdown file from anywhere (`⌘O`, Finder's Open With, or drag it onto the window) and it's edited where it is, without connecting its folder. Recently opened files are listed at the top of the file list.
+- Import files to copy them into a connected folder, or drag them onto a folder's section. Drag a folder in to connect it.
 - Edits save automatically.
 - Four themes, each with its own colors and fonts:
   - Slate (the default): Atkinson Hyperlegible Next, with JetBrains Mono code
@@ -48,6 +49,7 @@ The fonts are bundled under the SIL Open Font License 1.1, with each license in 
 | Action | Shortcut |
 |---|---|
 | New file | `⌘N` |
+| Open a file where it is | `⌘O` |
 | Connect folder | `⇧⌘O` |
 | Import | `⇧⌘I` |
 | Show or hide file list | `⌘\` |

@@ -229,13 +229,6 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(model.folders.contains(project))
     }
 
-    func testDroppedFileImports() throws {
-        let source = try write("x", "a.md", in: try folder("Outside"))
-        let model = makeModel()
-        model.handleDrop([source], into: nil)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: starter.appendingPathComponent("a.md").path))
-    }
-
     func testNewFileFromOutsideIsMarkedUnseen() throws {
         let model = makeModel()
         let file = try write("x", "a.md", in: starter)
@@ -423,6 +416,129 @@ final class AppModelTests: XCTestCase {
         try "changed".write(to: file, atomically: true, encoding: .utf8)
         model.filesChanged(at: [file.path])
         XCTAssertEqual(model.editor.string, "changed")
+    }
+
+    // MARK: Opening files in place
+
+    func testOpeningAFileFromAnywhereEditsItInPlace() throws {
+        let project = try folder("Project")
+        let file = try write("a", "Plan.md", in: project)
+        let model = makeModel()
+        let foldersBefore = model.folders
+        model.openFromAnywhere(file)
+        XCTAssertEqual(model.currentFile, file)
+        XCTAssertEqual(model.folders, foldersBefore, "its folder isn't added")
+        type("b", into: model)
+        model.saveNow()
+        XCTAssertEqual(try read(file), "ab")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: starter.appendingPathComponent("Plan.md").path))
+    }
+
+    func testOpenedFileIsListed() throws {
+        let file = try write("a", "Plan.md", in: try folder("Project"))
+        let model = makeModel()
+        model.openFromAnywhere(file)
+        XCTAssertEqual(model.openedFiles, [file])
+    }
+
+    func testOpenedListKeepsTheTenNewestFirst() throws {
+        let project = try folder("Project")
+        let model = makeModel()
+        var files: [URL] = []
+        for index in 1...12 {
+            let file = try write("\(index)", "Note \(index).md", in: project)
+            files.append(file)
+            model.openFromAnywhere(file)
+        }
+        XCTAssertEqual(model.openedFiles, Array(files.reversed().prefix(10)))
+    }
+
+    func testReopeningMovesAFileToTheTop() throws {
+        let project = try folder("Project")
+        let first = try write("a", "A.md", in: project)
+        let second = try write("b", "B.md", in: project)
+        let model = makeModel()
+        model.openFromAnywhere(first)
+        model.openFromAnywhere(second)
+        model.openFromAnywhere(first)
+        XCTAssertEqual(model.openedFiles, [first, second])
+    }
+
+    func testOpenedFilesAreRememberedOnRelaunch() throws {
+        let file = try write("a", "Plan.md", in: try folder("Project"))
+        makeModel().openFromAnywhere(file)
+        XCTAssertEqual(makeModel().openedFiles, [file])
+    }
+
+    func testFileInAConnectedFolderIsNotListedAsOpened() throws {
+        let model = makeModel()
+        let file = try write("a", "a.md", in: starter)
+        model.openFromAnywhere(file)
+        XCTAssertEqual(model.currentFile, file)
+        XCTAssertTrue(model.openedFiles.isEmpty)
+    }
+
+    func testRemovingFromTheListLeavesTheFile() throws {
+        let file = try write("a", "Plan.md", in: try folder("Project"))
+        let model = makeModel()
+        model.openFromAnywhere(file)
+        model.removeFromOpened(file)
+        XCTAssertTrue(model.openedFiles.isEmpty)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))
+    }
+
+    func testAMissingOpenedFileDropsOffTheList() throws {
+        let project = try folder("Project")
+        let kept = try write("a", "Kept.md", in: project)
+        let gone = try write("b", "Gone.md", in: project)
+        let model = makeModel()
+        model.openFromAnywhere(gone)
+        model.openFromAnywhere(kept)
+        try FileManager.default.removeItem(at: gone)
+        model.refresh()
+        XCTAssertEqual(model.openedFiles, [kept])
+    }
+
+    func testDroppingAFileOnTheWindowOpensItInPlace() throws {
+        let file = try write("a", "Plan.md", in: try folder("Project"))
+        let model = makeModel()
+        model.handleDrop([file], into: nil)
+        XCTAssertEqual(model.currentFile, file)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: starter.appendingPathComponent("Plan.md").path))
+    }
+
+    func testDroppingAFileOnAFolderSectionStillCopiesIt() throws {
+        let file = try write("a", "Plan.md", in: try folder("Project"))
+        let model = makeModel()
+        model.handleDrop([file], into: starter)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: starter.appendingPathComponent("Plan.md").path))
+    }
+
+    func testOpenedFilesFoldersAreWatched() throws {
+        let project = try folder("Project")
+        let file = try write("a", "Plan.md", in: project)
+        let model = makeModel()
+        model.openFromAnywhere(file)
+        XCTAssertTrue(model.watchedFolders.contains(project))
+    }
+
+    func testOutsideChangeToAnOpenedFileReloadsIt() throws {
+        let file = try write("a", "Plan.md", in: try folder("Project"))
+        let model = makeModel()
+        model.openFromAnywhere(file)
+        try "changed".write(to: file, atomically: true, encoding: .utf8)
+        model.filesChanged(at: [file.path])
+        XCTAssertEqual(model.editor.string, "changed")
+    }
+
+    func testFinderOpensOnlyMarkdownFiles() throws {
+        let project = try folder("Project")
+        let note = try write("a", "Plan.md", in: project)
+        let other = try write("x", "image.png", in: project)
+        let model = makeModel()
+        model.openFromFinder([other, note])
+        XCTAssertEqual(model.currentFile, note)
+        XCTAssertEqual(model.openedFiles, [note])
     }
 
     func testStateRestoredOnRelaunch() throws {

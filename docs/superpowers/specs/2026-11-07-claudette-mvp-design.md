@@ -129,6 +129,16 @@ Apps generally handle files in one of two ways.
 
 **Why revisit:** a library-style layer could sit on top later, such as a cross-folder recents view, tags, or search, without moving any files. Revisit this alongside the folder-structure conversation.
 
+## Folder structure (decided 8 November)
+
+Micky makes a folder for each project on the Mac, puts the Markdown file from Claude in it, and opens that file in Claudette. So:
+
+- **File › Open… (⌘O)**, Finder's **Open With**, and dragging a file onto the window all open the file where it is. Nothing is copied, and the file's folder is not connected.
+- Files opened this way are listed under **Opened files** at the top of the file list, newest first, up to 10. Right-click offers Show in Finder and Remove from List, which never touches the file. A file moved or deleted elsewhere drops off the list.
+- Their folders are watched, so an outside change to an opened file is still reloaded or kept as a conflict copy.
+- Claudette is an Open With choice for Markdown files, not the default; making it the default is left to Micky in Finder (Get Info › Open with › Change All).
+- Connecting folders, the `~/Claudette` starter folder, and Import (which copies) are unchanged. Dropping a file on a folder's section in the list still copies it into that folder.
+
 ## Left to the builder
 
 - Project generation, file layout, and folder-watching mechanism
