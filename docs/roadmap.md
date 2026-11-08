@@ -18,6 +18,7 @@ Micky gets Markdown files from Claude and wanted a calm place on the Mac to read
 | [#6](https://github.com/mickyhingorani/Claudette/pull/6) | 8 Nov | Opening a Markdown file from anywhere, in place, with an "Opened files" list |
 | [#7](https://github.com/mickyhingorani/Claudette/pull/7) | 8 Nov | Emoji and symbols draw again; this roadmap and `CLAUDE.md` |
 | [#8](https://github.com/mickyhingorani/Claudette/pull/8) | 8 Nov | The Harbor theme: deep teal, gold and pink, serif titles, a blue Note callout, outlined code |
+| [#9](https://github.com/mickyhingorani/Claudette/pull/9) | 8 Nov | Harbor Light, the first light theme; window controls that follow the theme; a themes page listing every font and color |
 
 Decisions along the way:
 - **Folder app, not library app.** Claudette works on folders and files where they are, and keeps no private copy. A write-up of the two approaches is in the design document.
