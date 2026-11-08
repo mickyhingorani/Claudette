@@ -31,6 +31,7 @@
 		626FDBCE484C8E2DF27BC8D3 /* ImageOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55082A4BFD3522E32AF0FDD8 /* ImageOverlayView.swift */; };
 		6509076BFB32412A676C878F /* IBMPlexSans-Italic[wdth,wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = FDA016501C14EAB655624BD2 /* IBMPlexSans-Italic[wdth,wght].ttf */; };
 		67D633573EDFD173843A1D83 /* IBMPlexMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C8BCF9F6ED0A88FDCF044A29 /* IBMPlexMono-Bold.ttf */; };
+		6A192641457CAF136DF95AEA /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 5B4C68877C7F157F9469B85F /* AppIcon.icon */; };
 		6C792218CE729EAD897233E8 /* JetBrainsMono[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = AAB462AE787EFE81200A98E1 /* JetBrainsMono[wght].ttf */; };
 		6DC23D45A3BE360EDE9A9D7D /* AtkinsonHyperlegibleNext[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 12A07D8B779FEAC1A331A035 /* AtkinsonHyperlegibleNext[wght].ttf */; };
 		72E41326F5724B84FF740E1F /* AtkinsonHyperlegibleNext-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0B581B0DA980BDC3A1DB2F22 /* AtkinsonHyperlegibleNext-Italic[wght].ttf */; };
@@ -84,6 +85,7 @@
 		55082A4BFD3522E32AF0FDD8 /* ImageOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageOverlayView.swift; sourceTree = "<group>"; };
 		55A5438F65AE9739BCE3AEE1 /* FileListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
 		57AF89E94939D999B66B13C8 /* Claudette.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Claudette.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5B4C68877C7F157F9469B85F /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		5EE10C310B2B43A4ED85F341 /* Geist-Italic[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Geist-Italic[wght].ttf"; sourceTree = "<group>"; };
 		686721175B082A3CD208B06D /* IBMPlexMono-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-BoldItalic.ttf"; sourceTree = "<group>"; };
 		7E4686DDE37BF53C77F82A85 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
@@ -193,6 +195,7 @@
 		A08B3E6375956C30BC810D5C /* App */ = {
 			isa = PBXGroup;
 			children = (
+				5B4C68877C7F157F9469B85F /* AppIcon.icon */,
 				E9715F52408350CB000B481D /* AppModel.swift */,
 				84D5452C8635E861027DB3F4 /* ClaudetteApp.swift */,
 				55A5438F65AE9739BCE3AEE1 /* FileListView.swift */,
@@ -317,6 +320,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6A192641457CAF136DF95AEA /* AppIcon.icon in Resources */,
 				72E41326F5724B84FF740E1F /* AtkinsonHyperlegibleNext-Italic[wght].ttf in Resources */,
 				473B73939A6A22DFBF9D3CC4 /* AtkinsonHyperlegibleNext-OFL.txt in Resources */,
 				6DC23D45A3BE360EDE9A9D7D /* AtkinsonHyperlegibleNext[wght].ttf in Resources */,

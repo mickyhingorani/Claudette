@@ -33,5 +33,4 @@ Minor items from the independent code review of the MVP, left for later.
 - An image in the middle of a sentence shows as its Markdown text, not as a picture.
 - Animated GIFs show only their first frame.
 
-- No app icon yet.
 - An inline code chip that wraps across two lines runs a little past its text on the first line.
