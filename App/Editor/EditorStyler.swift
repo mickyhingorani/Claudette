@@ -154,6 +154,9 @@ final class EditorStyler {
         if mode == .formatted { dimCheckedTasks(in: storage) }
         colorCode(in: storage)
         keepOperatorsAsTyped(in: storage)
+        // Setting fonts above undoes the system's choice of fallback fonts for characters a
+        // theme font lacks, like emoji, ⌘ or Japanese, which would then draw as nothing.
+        storage.text.fixFontAttribute(in: storage.region)
         if mode == .markdown {
             for range in map.hidden.map(\.range) + map.substitutions.map(\.range) where storage.touches(range) {
                 storage.addAttribute(.foregroundColor, value: theme.accent, range: range)
